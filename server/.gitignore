@@ -11,6 +11,7 @@ config.status
 configure
 depcomp
 epdfinfo
+epdfinfo-c
 install-sh
 libsynctex.a
 missing

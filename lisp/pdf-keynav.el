@@ -573,6 +573,9 @@ necessary buffer-locals have been loaded."
 
       (progn
 	(message "Activating pdf-keynav-minor-mode")
+	(setq pdf-keynav--cursor-in-flight nil
+	      pdf-keynav--cursor-pending nil
+	      pdf-keynav--cursor-shown nil)
 	(unless pdf-keynav-lazy-load
 	  (pdf-keynav-setup-buffer-locals)
 	  (add-hook 'pdf-view-after-change-page-hook
@@ -581,6 +584,8 @@ necessary buffer-locals have been loaded."
 	;; isearch compatibility
 	(add-hook 'isearch-mode-end-hook
 		  #'pdf-keynav-isearch-mode-end-set-point 10 'local)
+	(add-hook 'isearch-mode-hook
+		  #'pdf-keynav-isearch-invalidate-cursor nil 'local)
 	(setq pdf-isearch-filter-matches-function
 	      'pdf-keynav-isearch-filter-matches)
 
@@ -632,6 +637,8 @@ necessary buffer-locals have been loaded."
     ;; isearch compatibility
     (remove-hook 'isearch-mode-end-hook
 		 #'pdf-keynav-isearch-mode-end-set-point 'local)
+    (remove-hook 'isearch-mode-hook
+		 #'pdf-keynav-isearch-invalidate-cursor 'local)
     (setq pdf-isearch-filter-matches-function nil)
 
     ;; pdf-occur compatibility
@@ -785,6 +792,24 @@ point is visible."
 	(pdf-keynav-display-cursor
 	 (list inrectangle)))))))
 
+(defvar-local pdf-keynav--cursor-tick 0
+  "Generation counter for asynchronous cursor rendering.")
+
+(defvar-local pdf-keynav--cursor-in-flight nil
+  "Non-nil while a cursor render request is waiting for the server.")
+
+(defvar-local pdf-keynav--cursor-pending nil
+  "The latest cursor render request, coalescing keys pressed in quick succession.")
+
+(defvar-local pdf-keynav--cursor-shown nil
+  "The request whose image is currently displayed as the cursor.")
+
+(defun pdf-keynav-isearch-invalidate-cursor ()
+  "Forget the displayed cursor while isearch owns the page image."
+  (cl-incf pdf-keynav--cursor-tick)
+  (setq pdf-keynav--cursor-pending nil
+        pdf-keynav--cursor-shown nil))
+
 (defun pdf-keynav-display-cursor (region
 				  &optional rectangle-p not-single-line-p)
   "Modification of `pdf-view-display-region' used to display the cursor.
@@ -793,25 +818,92 @@ like ((X1 Y1 X2 Y2)).
 
 The color of the cursor is set as `pdf-view-midnight-colors'. RECTANGLE-P
 displays in style of a rectangle. NOT-SINGLE-LINE-P doesn't limit the displayed
-region to one line."
-  (let ((colors (if (and (not (bound-and-true-p pdf-view-midnight-minor-mode))
-                         (eq 'dark (frame-parameter nil 'background-mode)))
-                    pdf-view-midnight-colors
-                  (cons (cdr pdf-view-midnight-colors)
-                        (car pdf-view-midnight-colors))))
-        (page (pdf-view-current-page))
-        (width (car (pdf-view-image-size)))
-	(single-line-p (unless not-single-line-p t)))
-    (pdf-view-display-image
-     (pdf-view-create-image
-         (if rectangle-p
-             (pdf-info-renderpage-highlight
-              page width nil
-              `(,(car colors) ,(cdr colors) 0.35 ,@region))
-           (pdf-info-renderpage-text-regions
-            page width single-line-p nil
-            `(,(car colors) ,(cdr colors) ,@region)))
-       :width width))))
+region to one line.
+
+Rendering is asynchronous and coalesced: moving point never waits for the
+server, and at most one request is in flight.  A response is only displayed if
+point, page and image width are still the ones it was computed for."
+  (when (and pdf-keynav-minor-mode
+             (not (bound-and-true-p isearch-mode)))
+    (let* ((colors (if (and (not (bound-and-true-p pdf-view-midnight-minor-mode))
+                            (eq 'dark (frame-parameter nil 'background-mode)))
+                       pdf-view-midnight-colors
+                     (cons (cdr pdf-view-midnight-colors)
+                           (car pdf-view-midnight-colors))))
+           (page (pdf-view-current-page))
+           (width (car (pdf-view-image-size)))
+           (single-line-p (unless not-single-line-p t))
+           (key (list page width region rectangle-p single-line-p colors)))
+      (unless (equal key pdf-keynav--cursor-shown)
+        (cl-incf pdf-keynav--cursor-tick)
+        (setq pdf-keynav--cursor-pending
+              (list :tick pdf-keynav--cursor-tick
+                    :key key
+                    :buffer (current-buffer)
+                    :window (selected-window)
+                    :page page
+                    :width width
+                    :colors colors
+                    :region region
+                    :rectangle-p rectangle-p
+                    :single-line-p single-line-p))
+        (pdf-keynav--pump-cursor-render)))))
+
+(defun pdf-keynav--pump-cursor-render ()
+  "Send the latest pending cursor render request, unless one is in flight."
+  (when (and (not pdf-keynav--cursor-in-flight)
+             pdf-keynav--cursor-pending)
+    (let* ((request pdf-keynav--cursor-pending)
+           (buffer (plist-get request :buffer))
+           (window (plist-get request :window))
+           (tick (plist-get request :tick))
+           (page (plist-get request :page))
+           (width (plist-get request :width))
+           (colors (plist-get request :colors))
+           (region (plist-get request :region))
+           (rectangle-p (plist-get request :rectangle-p))
+           (single-line-p (plist-get request :single-line-p)))
+      (setq pdf-keynav--cursor-pending nil)
+      (if (not (and (buffer-live-p buffer) (window-live-p window)))
+          (pdf-keynav--pump-cursor-render)
+        (setq pdf-keynav--cursor-in-flight t)
+        (let ((pdf-info-asynchronous
+               (lambda (status data)
+                 (when (buffer-live-p buffer)
+                   (with-current-buffer buffer
+                     (setq pdf-keynav--cursor-in-flight nil)
+                     (condition-case err
+                         (when (and (null status)
+                                    (= tick pdf-keynav--cursor-tick)
+                                    (not (bound-and-true-p isearch-mode))
+                                    (window-live-p window)
+                                    (eq (window-buffer window) buffer))
+                           (with-selected-window window
+                             (when (and (derived-mode-p 'pdf-view-mode)
+                                        pdf-keynav-minor-mode
+                                        (= page (pdf-view-current-page window))
+                                        (= width (car (pdf-view-image-size nil window))))
+                               (pdf-view-display-image
+                                (pdf-view-create-image data :width width))
+                               (setq pdf-keynav--cursor-shown
+                                     (plist-get request :key)))))
+                       (error
+                        (message "pdf-keynav cursor display failed: %s"
+                                 (error-message-string err))))
+                     (pdf-keynav--pump-cursor-render))))))
+          (condition-case err
+              (with-current-buffer buffer
+                (if rectangle-p
+                    (pdf-info-renderpage-highlight
+                     page width nil
+                     `(,(car colors) ,(cdr colors) 0.35 ,@region))
+                  (pdf-info-renderpage-text-regions
+                   page width single-line-p nil
+                   `(,(car colors) ,(cdr colors) ,@region))))
+            (error
+             (setq pdf-keynav--cursor-in-flight nil)
+             (message "pdf-keynav cursor render failed: %s"
+                      (error-message-string err)))))))))
 
 (defun pdf-keynav-display-pointer-as-cursor (region &optional rectangle-p
                                                     not-single-line-p)

@@ -1,0 +1,44 @@
+[package]
+name = "epdfinfo"
+version = "1.0.0"
+edition = "2021"
+build = "build.rs"
+
+[[bin]]
+name = "epdfinfo"
+path = "src/main.rs"
+
+[dependencies]
+pcre2-sys = "0.2"
+png = "0.18"
+libc = "0.2"
+
+[dependencies.pdfcraft-render]
+git = "https://github.com/storytold/pdfcraft"
+rev = "c02341f6c0e0afe5b9c458794fcf236e16c34f90"
+
+[dependencies.pdfcraft-cos]
+git = "https://github.com/storytold/pdfcraft"
+rev = "c02341f6c0e0afe5b9c458794fcf236e16c34f90"
+
+[dependencies.pdfcraft-annot]
+git = "https://github.com/storytold/pdfcraft"
+rev = "c02341f6c0e0afe5b9c458794fcf236e16c34f90"
+
+[build-dependencies]
+cc = "1"
+
+[patch.crates-io]
+hayro = { git = "https://github.com/storytold/pdfcraft", rev = "c02341f6c0e0afe5b9c458794fcf236e16c34f90", package = "hayro" }
+hayro-syntax = { git = "https://github.com/storytold/pdfcraft", rev = "c02341f6c0e0afe5b9c458794fcf236e16c34f90", package = "hayro-syntax" }
+hayro-interpret = { git = "https://github.com/storytold/pdfcraft", rev = "c02341f6c0e0afe5b9c458794fcf236e16c34f90", package = "hayro-interpret" }
+hayro-cmap = { git = "https://github.com/storytold/pdfcraft", rev = "c02341f6c0e0afe5b9c458794fcf236e16c34f90", package = "hayro-cmap" }
+hayro-postscript = { git = "https://github.com/storytold/pdfcraft", rev = "c02341f6c0e0afe5b9c458794fcf236e16c34f90", package = "hayro-postscript" }
+hayro-jbig2 = { git = "https://github.com/storytold/pdfcraft", rev = "c02341f6c0e0afe5b9c458794fcf236e16c34f90", package = "hayro-jbig2" }
+lopdf = { git = "https://github.com/storytold/pdfcraft", rev = "c02341f6c0e0afe5b9c458794fcf236e16c34f90", package = "lopdf" }
+vello_common = { git = "https://github.com/storytold/pdfcraft", rev = "c02341f6c0e0afe5b9c458794fcf236e16c34f90", package = "vello_common" }
+vello_cpu = { git = "https://github.com/storytold/pdfcraft", rev = "c02341f6c0e0afe5b9c458794fcf236e16c34f90", package = "vello_cpu" }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
