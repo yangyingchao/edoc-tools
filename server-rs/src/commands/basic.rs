@@ -52,7 +52,7 @@ pub fn quit(session: &mut Session, _args: &[ArgValue], out: &mut Response) -> Cm
 pub fn getoptions(session: &mut Session, args: &[ArgValue], out: &mut Response) -> CmdResult {
     let doc = session.require_mut(args[0].doc())?;
     out.ok_begin();
-    for record in doc.options.records() {
+    for record in doc.options().records() {
         out.raw(&record);
         out.newline();
     }
@@ -95,19 +95,20 @@ pub fn setoptions(session: &mut Session, args: &[ArgValue], out: &mut Response) 
         i += 1;
     }
     let doc = session.require_mut(&key)?;
-    let mut opts = doc.options.clone();
-    for (slot, value) in updates {
-        match (slot, value) {
-            (0, ArgValue::NatNum(n)) => opts.usecolors = n,
-            (1, ArgValue::Bool(b)) => opts.printed = b,
-            (2, ArgValue::Color(c)) => opts.foreground = c,
-            (3, ArgValue::Color(c)) => opts.background = c,
-            _ => unreachable!(),
+    {
+        let opts = doc.options_mut();
+        for (slot, value) in updates {
+            match (slot, value) {
+                (0, ArgValue::NatNum(n)) => opts.usecolors = n,
+                (1, ArgValue::Bool(b)) => opts.printed = b,
+                (2, ArgValue::Color(c)) => opts.foreground = c,
+                (3, ArgValue::Color(c)) => opts.background = c,
+                _ => unreachable!(),
+            }
         }
     }
-    doc.options = opts;
     out.ok_begin();
-    for record in doc.options.records() {
+    for record in doc.options().records() {
         out.raw(&record);
         out.newline();
     }

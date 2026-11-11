@@ -7,7 +7,7 @@ use pdfcraft_cos::{Object, PdfString};
 use pdfcraft_render::PageInfo;
 
 use crate::commands::{CmdResult, Flow};
-use crate::document::Document;
+use crate::document::{Document, PdfDocument};
 use crate::pdf::annot::{self, AnnotClass};
 use crate::pdf::dates;
 use crate::pdf::text::{selected_glyphs, SelectionStyle};
@@ -60,7 +60,14 @@ fn meta() -> Meta {
 
 /// Remove the popup `add_annotation` creates for sticky notes, matching poppler's plain text
 /// annotation.
-fn remove_popup_for(doc: &mut Document, page0: usize, annot_ref: Option<pdfcraft_cos::ObjRef>) {
+fn pdf_mut<'a>(
+    session: &'a mut Session,
+    key: &str,
+) -> Result<&'a mut PdfDocument, String> {
+    session.require_mut(key)?.as_pdf_mut()
+}
+
+fn remove_popup_for(doc: &mut PdfDocument, page0: usize, annot_ref: Option<pdfcraft_cos::ObjRef>) {
     let list = doc.raw_annots_vec(page0);
     for (i, item) in list.iter().enumerate() {
         let Some(r) = item.as_ref() else { continue };
@@ -87,7 +94,14 @@ fn create_error(reason: &str) -> String {
 
 pub fn getannots(session: &mut Session, args: &[ArgValue], out: &mut Response) -> CmdResult {
     let key = args[0].doc().to_string();
-    let doc = session.require_mut(&key)?;
+    let doc = match session.require_mut(&key)? {
+        Document::Pdf(doc) => doc,
+        Document::Word(_) => {
+            out.ok_begin();
+            out.ok_end();
+            return Ok(Flow::Continue);
+        }
+    };
     let count = doc.page_count();
     let first = args[1].natnum().max(1);
     let last = {
@@ -129,7 +143,7 @@ pub fn getannots(session: &mut Session, args: &[ArgValue], out: &mut Response) -
 pub fn getannot(session: &mut Session, args: &[ArgValue], out: &mut Response) -> CmdResult {
     let key = args[0].doc().to_string();
     let annot_key = args[1].string().to_string();
-    let doc = session.require_mut(&key)?;
+    let doc = pdf_mut(session, &key)?;
     let (page0, pos) = doc
         .find_annot(&annot_key)
         .ok_or_else(|| format!("No such annotation: {annot_key}"))?;
@@ -158,7 +172,7 @@ pub fn addannot(session: &mut Session, args: &[ArgValue], out: &mut Response) ->
 
     let page0 = pn as usize - 1;
     let page = {
-        let doc = session.require_mut(&key)?;
+        let doc = pdf_mut(session, &key)?;
         let page = doc
             .page_info(pn)
             .cloned()
@@ -198,7 +212,7 @@ pub fn addannot(session: &mut Session, args: &[ArgValue], out: &mut Response) ->
             let quads = if regions.is_empty() {
                 vec![[r[0], r[3], r[2], r[3], r[0], r[1], r[2], r[1]]]
             } else {
-                let doc = session.require_mut(&key)?;
+                let doc = pdf_mut(session, &key)?;
                 let page_text = doc.page_text(page0)?;
                 let mut quads: Vec<[f64; 8]> = Vec::new();
                 for region in &regions {
@@ -251,7 +265,7 @@ pub fn addannot(session: &mut Session, args: &[ArgValue], out: &mut Response) ->
     } else {
         "markup"
     };
-    let doc = session.require_mut(&key)?;
+    let doc = pdf_mut(session, &key)?;
     let new = NewAnnotation {
         page: page0,
         shape,
@@ -300,7 +314,7 @@ pub fn addannot(session: &mut Session, args: &[ArgValue], out: &mut Response) ->
 pub fn delannot(session: &mut Session, args: &[ArgValue], out: &mut Response) -> CmdResult {
     let key = args[0].doc().to_string();
     let annot_key = args[1].string().to_string();
-    let doc = session.require_mut(&key)?;
+    let doc = pdf_mut(session, &key)?;
     let (page0, pos) = doc
         .find_annot(&annot_key)
         .ok_or_else(|| format!("No such annotation: {annot_key}"))?;
@@ -354,7 +368,7 @@ pub fn editannot(session: &mut Session, args: &[ArgValue], out: &mut Response) -
     let rest = args[2].rest().to_vec();
 
     let (page0, raw_index, entry_key, class, page) = {
-        let doc = session.require_mut(&key)?;
+        let doc = pdf_mut(session, &key)?;
         let (page0, pos) = doc
             .find_annot(&annot_key)
             .ok_or_else(|| format!("No such annotation: {annot_key}"))?;
@@ -387,7 +401,7 @@ pub fn editannot(session: &mut Session, args: &[ArgValue], out: &mut Response) -
         i += 1;
     }
 
-    let doc = session.require_mut(&key)?;
+    let doc = pdf_mut(session, &key)?;
     for (prop, value) in parsed {
         match (prop.as_str(), value) {
             ("flags", ArgValue::NatNum(n)) => {
@@ -495,7 +509,7 @@ pub fn editannot(session: &mut Session, args: &[ArgValue], out: &mut Response) -
 
 pub fn save(session: &mut Session, args: &[ArgValue], out: &mut Response) -> CmdResult {
     let key = args[0].doc().to_string();
-    let doc = session.require_mut(&key)?;
+    let doc = pdf_mut(session, &key)?;
     let Some(path) = tempfile::create() else {
         return Err("Unable to create temporary file".to_string());
     };

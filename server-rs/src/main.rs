@@ -12,6 +12,7 @@ mod region;
 mod session;
 mod synctex;
 mod tempfile;
+mod word;
 
 use std::ffi::CString;
 use std::io::{BufRead, Write};

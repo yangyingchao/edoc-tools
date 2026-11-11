@@ -15,7 +15,7 @@ pub fn forward_search(session: &mut Session, args: &[ArgValue], out: &mut Respon
     let line = args[2].natnum() as i32;
     let column = args[3].natnum() as i32;
     let doc = session.require_mut(&key)?;
-    let mut scanner = ScannerHandle::new(&doc.filename).ok_or_else(|| SCANNER_ERROR.to_string())?;
+    let mut scanner = ScannerHandle::new(doc.filename()).ok_or_else(|| SCANNER_ERROR.to_string())?;
     if !scanner.display_query(&source, line, column) {
         return Err("Destination not found".to_string());
     }
@@ -49,7 +49,7 @@ pub fn backward_search(session: &mut Session, args: &[ArgValue], out: &mut Respo
     let x = args[2].edge();
     let y = args[3].edge();
     let doc = session.require_mut(&key)?;
-    let mut scanner = ScannerHandle::new(&doc.filename).ok_or_else(|| SCANNER_ERROR.to_string())?;
+    let mut scanner = ScannerHandle::new(doc.filename()).ok_or_else(|| SCANNER_ERROR.to_string())?;
     let (width, height) = doc
         .page_size(pn)
         .ok_or_else(|| "Page not found".to_string())?;

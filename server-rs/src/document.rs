@@ -46,7 +46,7 @@ struct RasterCache {
     image: RgbImage,
 }
 
-pub struct Document {
+pub struct PdfDocument {
     pub filename: String,
     pub password: Option<String>,
     pub cos: CosDocument,
@@ -59,6 +59,12 @@ pub struct Document {
     raster_cache: Option<RasterCache>,
 }
 
+/// One open document: a PDF, or a Word document rendered by WordCraft.
+pub enum Document {
+    Pdf(PdfDocument),
+    Word(crate::word::WordDocument),
+}
+
 fn render_config(password: Option<&str>) -> RenderConfig {
     RenderConfig {
         password: password.map(|p| Arc::<str>::from(p)),
@@ -66,9 +72,12 @@ fn render_config(password: Option<&str>) -> RenderConfig {
     }
 }
 
-impl Document {
-    pub fn open(filename: &str, password: Option<&str>) -> Result<Self, String> {
-        let bytes = std::fs::read(filename).map_err(|e| e.to_string())?;
+impl PdfDocument {
+    pub fn from_bytes(
+        filename: &str,
+        bytes: Vec<u8>,
+        password: Option<&str>,
+    ) -> Result<Self, String> {
         let bytes = Arc::new(bytes);
         let cos =
             CosDocument::open_with_password(bytes.clone(), password).map_err(|e| e.to_string())?;
@@ -659,4 +668,143 @@ pub struct AttachmentInfo {
     pub mdate: Option<String>,
     pub cdate: Option<String>,
     pub checksum: Vec<u8>,
+}
+
+fn text_or_empty(value: &Option<String>) -> String {
+    value.clone().unwrap_or_default()
+}
+
+impl Document {
+    /// Open `filename`, choosing the backend by content: `%PDF-` goes to pdfcraft, everything
+    /// else is tried as a Word document (DOCX package, Flat OPC/WordML 2003 XML, or `.doc`).
+    pub fn open(filename: &str, password: Option<&str>) -> Result<Self, String> {
+        let bytes = std::fs::read(filename).map_err(|e| e.to_string())?;
+        if bytes.starts_with(b"%PDF-") {
+            Ok(Document::Pdf(PdfDocument::from_bytes(
+                filename, bytes, password,
+            )?))
+        } else {
+            Ok(Document::Word(crate::word::WordDocument::from_bytes(
+                filename,
+                &bytes,
+                password,
+            )?))
+        }
+    }
+
+    pub fn filename(&self) -> &str {
+        match self {
+            Document::Pdf(doc) => &doc.filename,
+            Document::Word(doc) => &doc.filename,
+        }
+    }
+
+    pub fn is_pdf(&self) -> bool {
+        matches!(self, Document::Pdf(_))
+    }
+
+    pub fn as_pdf_mut(&mut self) -> Result<&mut PdfDocument, String> {
+        match self {
+            Document::Pdf(doc) => Ok(doc),
+            Document::Word(_) => Err("Document is read-only".to_string()),
+        }
+    }
+
+    pub fn page_count(&self) -> usize {
+        match self {
+            Document::Pdf(doc) => doc.page_count(),
+            Document::Word(doc) => doc.page_count(),
+        }
+    }
+
+    pub fn page_size(&self, page1: i64) -> Option<(f64, f64)> {
+        match self {
+            Document::Pdf(doc) => doc.page_size(page1),
+            Document::Word(doc) => doc.page_size(page1),
+        }
+    }
+
+    pub fn options(&self) -> &Options {
+        match self {
+            Document::Pdf(doc) => &doc.options,
+            Document::Word(doc) => &doc.options,
+        }
+    }
+
+    pub fn options_mut(&mut self) -> &mut Options {
+        match self {
+            Document::Pdf(doc) => &mut doc.options,
+            Document::Word(doc) => &mut doc.options,
+        }
+    }
+
+    pub fn render_image(
+        &mut self,
+        page: usize,
+        width: i64,
+        usecolors: i64,
+        foreground: [u16; 3],
+        background: [u16; 3],
+    ) -> Result<RgbImage, String> {
+        match self {
+            Document::Pdf(doc) => {
+                doc.render_image(page, width, usecolors, foreground, background)
+            }
+            Document::Word(doc) => {
+                doc.render_image(page, width, usecolors, foreground, background)
+            }
+        }
+    }
+
+    pub fn page_text(&mut self, page: usize) -> Result<Arc<PageText>, String> {
+        match self {
+            Document::Pdf(doc) => doc.page_text(page),
+            Document::Word(_) => {
+                Err("text extraction is not available for Word documents".to_string())
+            }
+        }
+    }
+
+    /// The nine fields `metadata` prints, in protocol order.
+    pub fn metadata_fields(&self) -> [String; 9] {
+        match self {
+            Document::Pdf(doc) => {
+                let info = &doc.info;
+                let version = if info.pdf_version.is_empty() {
+                    "PDF-Unknown".to_string()
+                } else {
+                    format!("PDF-{}", info.pdf_version)
+                };
+                let creation = doc
+                    .info_text(b"CreationDate")
+                    .and_then(|v| dates::epoch_seconds(&v))
+                    .map(dates::ctime)
+                    .unwrap_or_default();
+                let modification = doc
+                    .info_text(b"ModDate")
+                    .and_then(|v| dates::epoch_seconds(&v))
+                    .map(dates::ctime)
+                    .unwrap_or_default();
+                [
+                    text_or_empty(&info.title),
+                    text_or_empty(&info.author),
+                    text_or_empty(&info.subject),
+                    text_or_empty(&info.keywords),
+                    text_or_empty(&info.creator),
+                    text_or_empty(&info.producer),
+                    version,
+                    creation,
+                    modification,
+                ]
+            }
+            Document::Word(doc) => doc.metadata_fields(),
+        }
+    }
+
+    pub fn page_labels(&self) -> Vec<String> {
+        match self {
+            Document::Pdf(doc) => doc.info.pages.iter().map(|p| p.label.clone()).collect(),
+            Document::Word(doc) => doc.page_labels(),
+        }
+    }
 }

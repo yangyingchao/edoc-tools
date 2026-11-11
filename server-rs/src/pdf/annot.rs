@@ -5,7 +5,7 @@ use std::sync::Arc;
 use pdfcraft_cos::Object;
 use pdfcraft_render::PageInfo;
 
-use crate::document::Document;
+use crate::document::PdfDocument;
 use crate::pdf::dates;
 use crate::region::Region;
 
@@ -78,11 +78,11 @@ pub fn type_name(subtype: Option<&[u8]>) -> &'static str {
     }
 }
 
-fn resolved(doc: &Document, value: &Object) -> Arc<Object> {
+fn resolved(doc: &PdfDocument, value: &Object) -> Arc<Object> {
     doc.cos.resolve(value)
 }
 
-fn get(doc: &Document, dict: &pdfcraft_cos::Dict, key: &[u8]) -> Option<Arc<Object>> {
+fn get(doc: &PdfDocument, dict: &pdfcraft_cos::Dict, key: &[u8]) -> Option<Arc<Object>> {
     dict.get(key).map(|v| resolved(doc, v))
 }
 
@@ -94,7 +94,7 @@ pub fn number(obj: &Object) -> Option<f64> {
     }
 }
 
-pub fn int(doc: &Document, dict: &pdfcraft_cos::Dict, key: &[u8]) -> Option<i64> {
+pub fn int(doc: &PdfDocument, dict: &pdfcraft_cos::Dict, key: &[u8]) -> Option<i64> {
     let o = get(doc, dict, key)?;
     match &*o {
         Object::Int(i) => Some(*i),
@@ -104,12 +104,12 @@ pub fn int(doc: &Document, dict: &pdfcraft_cos::Dict, key: &[u8]) -> Option<i64>
     }
 }
 
-pub fn real(doc: &Document, dict: &pdfcraft_cos::Dict, key: &[u8]) -> Option<f64> {
+pub fn real(doc: &PdfDocument, dict: &pdfcraft_cos::Dict, key: &[u8]) -> Option<f64> {
     let o = get(doc, dict, key)?;
     number(&o)
 }
 
-pub fn name<'a>(_doc: &'a Document, dict: &'a pdfcraft_cos::Dict, key: &[u8]) -> Option<&'a [u8]> {
+pub fn name<'a>(_doc: &'a PdfDocument, dict: &'a pdfcraft_cos::Dict, key: &[u8]) -> Option<&'a [u8]> {
     // `resolve` may return a fresh Arc, so names are looked up without crossing a reference.
     match dict.get(key)? {
         Object::Name(n) => Some(n.as_slice()),
@@ -117,13 +117,13 @@ pub fn name<'a>(_doc: &'a Document, dict: &'a pdfcraft_cos::Dict, key: &[u8]) ->
     }
 }
 
-pub fn text(doc: &Document, dict: &pdfcraft_cos::Dict, key: &[u8]) -> Option<String> {
+pub fn text(doc: &PdfDocument, dict: &pdfcraft_cos::Dict, key: &[u8]) -> Option<String> {
     let o = get(doc, dict, key)?;
     let s = o.as_string()?;
     Some(s.to_text())
 }
 
-pub fn rect(doc: &Document, dict: &pdfcraft_cos::Dict, key: &[u8]) -> Option<[f64; 4]> {
+pub fn rect(doc: &PdfDocument, dict: &pdfcraft_cos::Dict, key: &[u8]) -> Option<[f64; 4]> {
     let o = get(doc, dict, key)?;
     let Some(items) = o.as_array() else {
         return None;
@@ -211,7 +211,7 @@ pub fn popup_edges(raw: [f64; 4], page: &PageInfo) -> [f64; 4] {
 }
 
 /// The hex colour poppler reads from `/C`, or `None` when absent or unusable.
-pub fn color_hex(doc: &Document, dict: &pdfcraft_cos::Dict) -> Option<String> {
+pub fn color_hex(doc: &PdfDocument, dict: &pdfcraft_cos::Dict) -> Option<String> {
     let o = get(doc, dict, b"C")?;
     let items = o.as_array()?;
     let values: Vec<f64> = items
@@ -268,7 +268,7 @@ fn region_record(region: &Region, width: f64, height: f64) -> String {
 }
 
 /// The region poppler builds from a text markup's `/QuadPoints`.
-fn quad_region(doc: &Document, dict: &pdfcraft_cos::Dict, page: &PageInfo) -> Region {
+fn quad_region(doc: &PdfDocument, dict: &pdfcraft_cos::Dict, page: &PageInfo) -> Region {
     let mut region = Region::new();
     let Some(o) = get(doc, dict, b"QuadPoints") else {
         return region;
@@ -303,7 +303,7 @@ fn quad_region(doc: &Document, dict: &pdfcraft_cos::Dict, page: &PageInfo) -> Re
 
 /// One `annotation_print` record, without its trailing newline.
 pub fn record(
-    doc: &Document,
+    doc: &PdfDocument,
     page0: usize,
     key: &str,
     dict: &pdfcraft_cos::Dict,

@@ -3,7 +3,7 @@
 use pdfcraft_render::{Attachment, AttachmentSource};
 
 use crate::commands::{CmdResult, Flow};
-use crate::document::{AttachmentInfo, Document};
+use crate::document::{AttachmentInfo, Document, PdfDocument};
 use crate::pdf::annot;
 use crate::pdf::dates;
 use crate::protocol::arg::ArgValue;
@@ -47,7 +47,7 @@ fn write_record(out: &mut Response, id: &str, info: &AttachmentInfo, saved: Opti
     out.newline();
 }
 
-fn save_attachment(doc: &Document, att: &Attachment) -> Option<String> {
+fn save_attachment(doc: &PdfDocument, att: &Attachment) -> Option<String> {
     let bytes = match doc.attachment_bytes(att) {
         Ok(b) => b,
         Err(e) => {
@@ -66,7 +66,14 @@ fn save_attachment(doc: &Document, att: &Attachment) -> Option<String> {
 pub fn getattachments(session: &mut Session, args: &[ArgValue], out: &mut Response) -> CmdResult {
     let key = args[0].doc().to_string();
     let do_save = args[1].flag();
-    let doc = session.require_mut(&key)?;
+    let doc = match session.require_mut(&key)? {
+        Document::Pdf(doc) => doc,
+        Document::Word(_) => {
+            out.ok_begin();
+            out.ok_end();
+            return Ok(Flow::Continue);
+        }
+    };
     out.ok_begin();
     let mut index = 0;
     for att in &doc.info.attachments {
@@ -97,7 +104,14 @@ pub fn getattachment_from_annot(
     let key = args[0].doc().to_string();
     let annot_key = args[1].string().to_string();
     let do_save = args[2].flag();
-    let doc = session.require_mut(&key)?;
+    let doc = match session.require_mut(&key)? {
+        Document::Pdf(doc) => doc,
+        Document::Word(_) => {
+            out.ok_begin();
+            out.ok_end();
+            return Ok(Flow::Continue);
+        }
+    };
     let (page0, pos) = doc
         .find_annot(&annot_key)
         .ok_or_else(|| format!("No such annotation: {annot_key}"))?;

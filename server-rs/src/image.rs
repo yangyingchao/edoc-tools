@@ -140,6 +140,27 @@ impl RgbImage {
         }
     }
 
+    /// Recolour each rectangle (page points) after scaling to pixels. Used by the Word
+    /// backend, whose text layer is a list of character boxes rather than pdfcraft glyphs.
+    pub fn highlight_rects(
+        &mut self,
+        rects: &[[f32; 4]],
+        scale: f64,
+        fg: [u16; 3],
+        bg: [u16; 3],
+        alpha: f64,
+    ) {
+        for rect in rects {
+            let r = [
+                f64::from(rect[0]) * scale,
+                f64::from(rect[1]) * scale,
+                f64::from(rect[2]) * scale,
+                f64::from(rect[3]) * scale,
+            ];
+            recolor::recolor_rect(self, r, fg, bg, alpha);
+        }
+    }
+
     /// The non-background bounding box, comparing each pixel with the top-left one.
     ///
     /// Returns `[x1, y1, x2, y2]` with exclusive right and bottom edges.

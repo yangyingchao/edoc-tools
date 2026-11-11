@@ -24,6 +24,14 @@ pub fn search_string(
     out: &mut Response,
 ) -> CmdResult {
     let key = args[0].doc().to_string();
+    {
+        let doc = session.require_mut(&key)?;
+        if !doc.is_pdf() {
+            out.ok_begin();
+            out.ok_end();
+            return Ok(Flow::Continue);
+        }
+    }
     let needle = args[3].string().to_string();
     let ignore_case = args[4].flag();
     let (first, last) = {
@@ -244,6 +252,14 @@ pub fn search_regexp(
     out: &mut Response,
 ) -> CmdResult {
     let key = args[0].doc().to_string();
+    {
+        let doc = session.require_mut(&key)?;
+        if !doc.is_pdf() {
+            out.ok_begin();
+            out.ok_end();
+            return Ok(Flow::Continue);
+        }
+    }
     let pattern = args[3].string().to_string();
     let cflags = args[4].natnum();
     let compiled = compile(&pattern, cflags)?;

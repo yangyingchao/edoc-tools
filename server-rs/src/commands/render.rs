@@ -45,7 +45,7 @@ pub fn renderpage(session: &mut Session, args: &[ArgValue], out: &mut Response) 
 
     let mut image = {
         let doc = session.require_mut(&key)?;
-        let options = doc.options.clone();
+        let options = doc.options().clone();
         doc.render_image(
             pn as usize - 1,
             width,
@@ -131,11 +131,21 @@ pub fn renderpage(session: &mut Session, args: &[ArgValue], out: &mut Response) 
                 let y1 = pt_width * r[1] * cbh + pt_width * cb[1];
                 let y2 = pt_width * r[3] * cbh + pt_width * cb[1];
                 let view = [x1 as f32, y1 as f32, x2 as f32, y2 as f32];
-                let page = {
-                    let doc = session.require_mut(&key)?;
-                    doc.page_text(pn as usize - 1)?
-                };
-                image.highlight_text(&page, view, style, scale, fg, bg, 1.0);
+                let doc = session.require_mut(&key)?;
+                match doc {
+                    crate::document::Document::Pdf(doc) => {
+                        let page = doc.page_text(pn as usize - 1)?;
+                        image.highlight_text(&page, view, style, scale, fg, bg, 1.0);
+                    }
+                    crate::document::Document::Word(doc) => {
+                        let rects: Vec<[f32; 4]> = doc
+                            .selected_chars(pn as usize - 1, view, style)
+                            .into_iter()
+                            .map(|c| c.rect)
+                            .collect();
+                        image.highlight_rects(&rects, scale, fg, bg, 1.0);
+                    }
+                }
             }
             RenderOption::HighlightLine(r) => {
                 let cbw = cb[2] - cb[0];
@@ -146,11 +156,21 @@ pub fn renderpage(session: &mut Session, args: &[ArgValue], out: &mut Response) 
                 let y2 = pt_width * r[3] * cbh + pt_width * cb[1];
                 let m = y1 + (y2 - y1) / 2.0;
                 let view = [x1 as f32, m as f32, x2 as f32, m as f32];
-                let page = {
-                    let doc = session.require_mut(&key)?;
-                    doc.page_text(pn as usize - 1)?
-                };
-                image.highlight_text(&page, view, style, scale, fg, bg, 1.0);
+                let doc = session.require_mut(&key)?;
+                match doc {
+                    crate::document::Document::Pdf(doc) => {
+                        let page = doc.page_text(pn as usize - 1)?;
+                        image.highlight_text(&page, view, style, scale, fg, bg, 1.0);
+                    }
+                    crate::document::Document::Word(doc) => {
+                        let rects: Vec<[f32; 4]> = doc
+                            .selected_chars(pn as usize - 1, view, style)
+                            .into_iter()
+                            .map(|c| c.rect)
+                            .collect();
+                        image.highlight_rects(&rects, scale, fg, bg, 1.0);
+                    }
+                }
             }
         }
     }
