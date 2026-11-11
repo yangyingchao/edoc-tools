@@ -4,10 +4,9 @@
 #+Maintainer: Vedang Manerikar
 #+Maintainer_Email: vedang.manerikar@gmail.com
 
-[[https://app.circleci.com/pipelines/github/vedang/pdf-tools][https://circleci.com/gh/vedang/pdf-tools.svg?style=svg]]
 [[https://elpa.nongnu.org/nongnu/pdf-tools.html][http://elpa.nongnu.org/nongnu/pdf-tools.svg]]
 [[https://stable.melpa.org/#/pdf-tools][http://stable.melpa.org/packages/pdf-tools-badge.svg]]
-[[https://melpa.org/#/pdf-tools][http://melpa.org/packages/pdf-tools-badge.svg]] [[https://ci.appveyor.com/project/vedang/pdf-tools][https://ci.appveyor.com/api/projects/status/yqic2san0wi7o5v8/branch/master?svg=true]]
+[[https://melpa.org/#/pdf-tools][https://melpa.org/packages/pdf-tools-badge.svg]]
 
 =======
 The ~pdf-tools~ Wiki is maintained at https://pdftools.wiki. Head to the site if you find it easier to navigate a website for reading a manual. All the topics on the site are listed at https://pdftools.wiki/impulse.
@@ -44,9 +43,7 @@ The ~pdf-tools~ Wiki is maintained at https://pdftools.wiki. Head to the site if
 - [[#key-bindings-in-pdf-tools][Key-bindings in PDF Tools]]
 - [[#tips-and-tricks-for-developers][Tips and Tricks for Developers]]
   - [[#turn-on-debug-mode][Turn on debug mode]]
-  - [[#run-emacs-lisp-tests-locally][Run Emacs lisp tests locally]]
-  - [[#run-server-compilation-tests-locally][Run server compilation tests locally]]
-  - [[#add-a-dockerfile-to-automate-server-compilation-testing][Add a Dockerfile to automate server compilation testing]]
+  - [[#run-server-tests-locally][Run server tests locally]]
   - [[#issue-template-for-bug-reports][Issue Template for Bug Reports]]
     - [[#describe-the-bug][Describe the bug]]
     - [[#steps-to-reproduce-the-behaviour][Steps To Reproduce the behaviour:]]
@@ -57,8 +54,6 @@ The ~pdf-tools~ Wiki is maintained at https://pdftools.wiki. Head to the site if
 - [[#faqs][FAQs]]
   - [[#pdfs-are-not-rendering-well][PDFs are not rendering well!]]
   - [[#what-emacs-versions-does-pdf-tools-support][What Emacs versions does pdf-tools support?]]
-  - [[#i-want-to-add-support-for-pdf-tools-on-my-fav-os-how-do-i-do-that][I want to add support for pdf-tools on "My Fav OS". How do I do that?]]
-  - [[#i-am-on-a-macbook-m1-and-pdf-tools-installation-fails-with-a-stack-trace][I am on a Macbook M1 and pdf-tools installation fails with a stack-trace]]
   - [[#i-am-a-developer-making-changes-to-the-pdf-tools-source-code][I am a developer, making changes to the pdf-tools source code]]
 
 * About PDF Tools
@@ -69,9 +64,9 @@ The ~pdf-tools~ Wiki is maintained at https://pdftools.wiki. Head to the site if
 :END:
 PDF Tools is, among other things, a replacement of DocView for PDF files. The key difference is that pages are not pre-rendered by, say, ~ghostscript~ and stored in the file-system, but rather created on-demand and stored in memory.
 
-This rendering is performed by a special library named, for whatever reason, ~poppler~, running inside a server program. This program is called ~epdfinfo~ and its job is to successively read requests from Emacs and produce the proper results, i.e. the PNG image of a PDF page.
+This rendering is performed by a server program called ~epdfinfo~, which reads requests from Emacs and returns the proper results, i.e. the PNG image of a page. PDF files are rendered by ~pdfcraft~; Word documents (~.docx~ and ~.doc~) are laid out and rendered by ~WordCraft~ in the same process.
 
-Actually, displaying PDF files is just one part of ~pdf-tools~. Since ~poppler~ can provide us with all kinds of information about a document and is also able to modify it, there is a lot more we can do with it. [[https://www.dailymotion.com/video/x2bc1is][Watch this video for a detailed demo!]]
+Actually, displaying PDF files is just one part of ~pdf-tools~. The PDF engine can provide all kinds of information about a document and is also able to modify it, so there is a lot more we can do with it. [[https://www.dailymotion.com/video/x2bc1is][Watch this video for a detailed demo!]]
 
 * Installing pdf-tools
 :PROPERTIES:
@@ -81,7 +76,10 @@ Actually, displaying PDF files is just one part of ~pdf-tools~. Since ~poppler~ 
 :END:
 Installing this package via NonGNU ELPA or MELPA or any of the other package managers is straightforward and should just work! You should not require any manual changes. The documentation below is *only if you are installing from source*, or for troubleshooting / debugging purposes.
 
-~pdf-tools~ requires a server ~epdfinfo~ to run against, which it will try to compile and build when it is activated for the first time. The following steps need to be followed *in this order*, to install ~pdf-tools~ and ~epdfinfo~ correctly:
+~pdf-tools~ requires a server ~epdfinfo~ to run against. The server is the Rust program
+under ~server-rs/~; it is *not* compiled automatically when the Lisp package is activated.
+The following steps need to be followed *in this order*, to install ~pdf-tools~ and ~epdfinfo~
+correctly:
 
 - [[brain-child:e305cd0a-e798-4c2b-af27-21bcd936c1c9][Installing the epdfinfo server]]
 - [[brain-child:32c4fc3b-b4ea-43bd-b92c-bdf2d3831fcf][Installing pdf-tools elisp code]]
@@ -91,79 +89,69 @@ Installing this package via NonGNU ELPA or MELPA or any of the other package man
 :CREATED:  [2021-12-29 Wed 18:34]
 :ID:       e305cd0a-e798-4c2b-af27-21bcd936c1c9
 :END:
-If you install ~pdf-tools~ via NonGNU ELPA or MELPA, *you don't need to worry about this separate server installation at all*.
+Requirements:
 
-Note: You'll need GNU Emacs \ge 26.3 and some form of a GNU/Linux OS. Other operating systems are not officially supported, but ~pdf-tools~ is known to work on many of them.
+- Rust stable toolchain (~rustup~) with ~cargo~
+- A C compiler (~cc~) for the bundled Synctex parser
+- ~zlib~ development headers
+- System fonts, used when rendering Word documents
 
-The ~epdfinfo~ install script takes care of installing all the necessary pre-requisites on supported operating systems (see list below). See the section on [[id:A34704B9-1B51-4614-8806-C4059F7B42D5][I want to add support for ~pdf-tools~ on =My Fav OS=. How do I do that?]] to learn how to add your favorite Operating System to this list.
-
-Similarly, package-managers are not officially supported, but ~pdf-tools~ is known to be available on some of them. See the section on [[id:fb5cef15-fed4-4dec-a443-52f7c00c7831][Installing the ~epdfinfo~ server from package managers]] to avoid manual installation of server / server prerequisites.
-
-Installation Instructions for ~epdfinfo~:
+Build the server from the source tree:
 #+begin_src sh
-  $ git clone https://github.com/vedang/pdf-tools
+  $ git clone https://github.com/yingchaoyang/pdf-tools
   $ cd /path/to/pdf-tools
-  $ make -s # If you don't have make installed, run ./server/autobuild and it will install make
+  $ make
 #+end_src
 
-This should give you no error and should compile the ~epdfinfo~ server. If you face a problem, please report on the issue tracker!
+~make~ runs ~cargo build --release~ and copies the executable to ~server-rs/epdfinfo~.
+When running from the git repository, ~pdf-info-epdfinfo-program~ finds that file
+automatically. Otherwise put it on ~PATH~ or set ~pdf-info-epdfinfo-program~ explicitly.
 
-The following Operating Systems / package managers are supported. *Note*: The package manager used to install pre-requisites should be installed on your OS for the script to work:
-
-- Debian-based systems (~debian~, ~ubuntu~): ~apt-get~
-- Fedora: ~dnf~
-- macOS: ~brew~
-- Windows (MSYS2/ MingW): ~pacman~
-- NixOS: ~nix-shell~
-- openSUSE (Tumbleweed and Leap): ~zypper~
-- Void Linux: ~xbps-install~
-- Apline Linux: ~apk~
-- FreeBSD: ~pkg~
-- OpenBSD: ~pkg_add~
-- NetBSD: ~pkgin~
-- Arch Linux: ~pacman~
-- Gentoo: ~emerge~
-- CentOS: ~yum~
+If you face a problem, please report on the issue tracker.
 
 *** Installing the epdfinfo server from package managers
 :PROPERTIES:
 :CREATED:  [2022-02-13 Sun 23:10]
 :ID:       fb5cef15-fed4-4dec-a443-52f7c00c7831
 :END:
-~pdf-tools~ can be directly installed from the package manager on some operating systems. Note that the packages available on these package managers are not maintained by the author and might be outdated.
-
-- Debian:  https://packages.debian.org/buster/elpa-pdf-tools-server
-- Ubuntu: https://packages.ubuntu.com/impish/elpa-pdf-tools-server
-- MSYS2 / MINGW (Windows): https://packages.msys2.org/package/mingw-w64-x86_64-emacs-pdf-tools-server?repo=mingw64
-- FreeBSD: https://repology.org/metapackages/?search=pdf-tools&inrepo=freebsd
+Distro packages still ship the C implementation of ~epdfinfo~. This fork only provides the Rust
+server under ~server-rs/~, so build it from source instead of installing ~elpa-pdf-tools-server~.
 
 *** Installing the epdfinfo server from source on Windows (+ Gotchas)
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 18:34]
 :ID:       d14e01ff-9bd5-47ee-86fc-859b4499d5d7
 :END:
-If using the GNU binaries for Windows, support for PNG and ~zlib~ must first be installed by copying the appropriate dlls into emacs' ~bin/~ directory. Most third-party binaries come with this already done.
+Install [[https://www.msys2.org/][MSYS2]], open a ~mingw64~ shell (*Note:* use ~mingw64.exe~, not
+~msys2.exe~), then install the Rust toolchain and a C compiler:
+#+begin_src sh
+  $ pacman -S --needed git mingw-w64-x86_64-rust mingw-w64-x86_64-gcc
+  $ git clone https://github.com/yingchaoyang/pdf-tools
+  $ cd pdf-tools
+  $ make
+#+end_src
 
-1. [[https://www.msys2.org/][install MSYS2]] and update the package database and core packages using the instructions provided.
-2. Open ~mingw64~ shell (*Note:* You must use ~mingw64.exe~ and not ~msys2.exe~)
-3. Compile the ~epdfinfo~ server using Installation steps described in [[id:e305cd0a-e798-4c2b-af27-21bcd936c1c9][Installing the ~epdfinfo~ server]]
-4. This should produce a file ~server/epdfinfo.exe~. Copy this file into the ~pdf-tools/~ installation directory in your Emacs.
-5. Make sure Emacs can find ~epdfinfo.exe~. Either add the MINGW install location (e.g. ~C:/msys2/mingw64/bin~) to the system path with ~setx PATH "C:\msys2\mingw64\bin;%PATH%"~ or set Emacs's path with ~(setenv "PATH" (concat "C:\\msys64\\mingw64\\bin;" (getenv "PATH")))~. Note that libraries from other GNU utilities, such as Git for Windows, may interfere with those needed by ~pdf-tools~. ~pdf-info-check-epdinfo~ will succeed, but errors occur when trying to view a PDF file. This can be fixed by ensuring that the MSYS libraries are always preferred.
-6. ~pdf-tools~ will successfully compile using Cygwin, but it will not be able to open PDFs properly due to the way binaries compiled with Cygwin handle file paths. Please use MSYS2.
+~make~ produces ~server-rs/epdfinfo.exe~. Copy it into the ~pdf-tools/~ installation
+directory in your Emacs, or add its directory to ~PATH~. Do not use Cygwin: its path handling
+breaks the server.
 
 *** Installing the epdfinfo server from source on macOS (+ Gotchas)
 :PROPERTIES:
 :CREATED:  [2022-10-11 Tue 11:42]
 :ID:       60CBCD65-5654-400A-913F-8B31901D071C
 :END:
-On macOS, ~autobuild~ adjusts ~PKG_CONFIG_PATH~ so that ~pdf-tools~ can find some of the keg-only packages installed by ~brew~. It is recommended that you review the output logs printed by ~brew~ during the installation process to also export the relevant paths to the appropriate ENV variables.
+Install the Rust toolchain with https://rustup.rs and make sure the Xcode command line tools
+are present (~xcode-select --install~); they provide ~cc~. Then run ~make~ as described
+above.
 
 *** Common installation gotchas
 :PROPERTIES:
 :CREATED:  [2022-10-11 Tue 11:04]
 :ID:       3F4C0FDF-6AC0-4845-BA2D-ED7C2F40D894
 :END:
-In case you decide to install ~libpoppler~ from source, make sure to run its configure script with the ~--enable-xpdf-headers~ option.
+If ~make~ fails while compiling ~pcre2-sys~ or the Synctex parser, install a C compiler,
+~make~ and the ~zlib~ development headers. A missing Rust toolchain is reported as
+~cargo: command not found~.
 
 *** Installing optional features
 :PROPERTIES:
@@ -178,23 +166,19 @@ One feature -- following links of a PDF document by plain keystrokes -- requires
 :END:
 ~pdf-tools~ requires ~tablist~ package (>= version 0.70) to be installed, for it to work correctly. Please make sure that the latest version of ~tablist~ is installed.
 
-We have already run the steps necessary to install ~pdf-tools~ as part of [[id:e305cd0a-e798-4c2b-af27-21bcd936c1c9][the server installation]]! These are:
-#+BEGIN_SRC sh
-  $ git clone https://github.com/vedang/pdf-tools
-  $ cd /path/to/pdf-tools
-  $ make -s
-#+END_SRC
-
-If the ~make~ command produced the ELP file ~pdf-tools-${VERSION}.tar~ you are fine! This package contains all the necessary files for Emacs and may be installed by either using
-#+begin_src sh
-    $ make install-package
-#+end_src
-or executing the Emacs command
+The Lisp code lives in ~lisp/~. Add it to ~load-path~ (or install the package directory with
+your package manager), then activate PDF Tools:
 #+begin_src elisp
-  M-x package-install-file RET pdf-tools-${VERSION}.tar RET
+  (add-to-list 'load-path "/path/to/pdf-tools/lisp")
+  (pdf-tools-install)  ; Standard activation command
+  (pdf-loader-install) ; On demand loading, leads to faster startup time
 #+end_src
 
-You can test if the package has been installed correctly, by running
+~make~ builds only the server; it does not create a package tarball. Use your regular
+package manager (MELPA, NonGNU ELPA, ~package-vc-install~, straight, elpaca, ...) to install the
+Lisp code, and build ~epdfinfo~ once with ~make~ as described above.
+
+You can test if the server is found and working by running
 #+begin_src elisp
   M-x pdf-info-check-epdfinfo RET
 #+end_src
@@ -482,33 +466,16 @@ Note that this overwrites the PDF file visited in the buffer from which it is ru
 #+end_src
 Toggling debug mode prints information about various operations in the ~*Messages*~ buffer, and this is useful to see what is happening behind the scenes
 
-** Run Emacs lisp tests locally
+** Run server tests locally
 :PROPERTIES:
 :CREATED:  [2022-05-09 Mon 21:27]
 :ID:       1CBE7325-A5A1-479B-9A98-BEEFBAC9D8FF
 :END:
-You can go to the ~pdf-tools~ folder and run ~make test~ to run the ERT tests and check if the changes you have made to the code break any of the tests.
-
-The tests are written in ERT, which is the built-in testing system in Emacs. However, they are run using ~Cask~ which you will have to install first, if you don't have it already. You can install ~Cask~ by following the instructions on their site at https://github.com/cask/cask
-** Run server compilation tests locally
-:PROPERTIES:
-:CREATED:  [2022-07-20 Wed 16:42]
-:ID:       5327945D-9D92-4462-8172-7237DEF4C359
-:END:
-You can go to the ~pdf-tools~ folder and run ~make server-test~ to check if the changes you have made to the server code break compilation on any of the supported operating systems.
-
-The tests build ~Podman~ images for all supported operating systems, so you will have to install ~Podman~ first, if you don't have already. You can install ~Podman~ by following the instructions on their site at https://podman.io/getting-started/installation
-
-Podman is compatible with Docker, so if you already have ~docker~ installed, you should be able to ~alias podman=docker~ on your shell and run the tests, without having to install Docker. (Note: I have not tested this)
-
-** Add a Dockerfile to automate server compilation testing
-:PROPERTIES:
-:CREATED:  [2022-07-20 Wed 16:52]
-:ID:       A401543C-308B-4175-8212-5B78CD6C8389
-:END:
-The ~server/test/docker~ folder contains Dockerfile templates used for testing that the ~epdfinfo~ server compiles correctly on various operating systems ([[id:5327945D-9D92-4462-8172-7237DEF4C359][more details here]]).
-
-To see the list of operating systems where compilation testing is supported, run ~make server-test-supported~. To see the list of operating systems where testing is unsupported, run ~make server-test-unsupported~. To add support, look into the ~server/test/docker/templates~ folder (~ubuntu~ files are a good example to refer to)
+You can go to the ~pdf-tools~ folder and run
+#+begin_src sh
+  $ cargo test --release --manifest-path server-rs/Cargo.toml
+#+end_src
+to run the server unit tests. ~make~ builds the release binary; it does not run the ERT suite.
 
 ** Issue Template for Bug Reports
 :PROPERTIES:
@@ -534,7 +501,7 @@ Please complete the following information:
 
 - OS: [eg: MacOS Catalina]
 - Emacs Version: [This should be the output of =M-x emacs-version= ]
-- Poppler Version: [eg: output of ~brew info poppler~ and similarly for other OSs]
+- `epdfinfo` path: [output of ~M-: pdf-info-epdfinfo-program~]
 
 *** Your pdf-tools install
 Please complete the following information:
@@ -557,7 +524,9 @@ Please complete the following information:
 :CREATED:  [2023-06-10 Sat 23:25]
 :ID:       9B5F797F-9BB3-45D9-B364-D4E5F13222BF
 :END:
-Have you upgraded ~poppler~ recently? This can cause ~epdfinfo~ to stop working, since it was compiled with the previous version of ~poppler~. Just run =M-x pdf-tools-install= and this should be fixed.
+The server binary may be missing or stale. Rebuild it with ~make~ in the source tree, then
+restart it with ~M-x pdf-info-restart-process~ or reopen the document. If you upgraded the
+Lisp package, make sure ~pdf-info-epdfinfo-program~ points at the newly built binary.
 
 ** PDFs are not rendering well!
 :PROPERTIES:
@@ -578,65 +547,6 @@ to scale the images correctly when rendering them.
 :ID:       f44c66e6-402d-4154-b806-6bb4180a0a5b
 :END:
 ~pdf-tools~ supports the 3 latest versions of Emacs major releases. At the moment of this writing, this means that the minimum supported Emacs version is ~26.3~.
-
-** I want to add support for pdf-tools on "My Fav OS". How do I do that?
-:PROPERTIES:
-:CREATED:  [2022-04-25 Mon 21:50]
-:ID:       A34704B9-1B51-4614-8806-C4059F7B42D5
-:END:
-I'm working on automating ~pdf-tools~ installation as much as possible, in order to improve the installation experience. If you want to add support for a new / currently unsupported Operating System, please modify the ~server/autobuild~ script. Say you want to support a new Operating System called MyFavOS. You need to do the following work:
-
-1. Search for the ~Figure out where we are~ section. Here, add a call to ~os_myfavos~ right below ~handle_options~ at the end of the existing call chain. Here we try and pick up the correct Operating System and install the relevant dependencies.
-2. Add handling for the ~--os~ argument in ~os_argument~ for ~myfavos~, so that the appropriate function can be called to install pre-requisites. ~--os~ is the argument that we pass to the script from the command-line to indicate which OS we are on.
-3. Create a ~os_myfavos~ function. This function checks if we are running on MyFavOS. If we are running on MyFavOS, it sets up ~PKGCMD~, ~PKGARGS~ and ~PACKAGES~ variables so that the appropriate package manager can install the dependencies as part of the rest of the ~autobuild~ script.
-4. If you are adding support for your favorite operating system, consider adding automated testing support as well, to help me ensure that ~epdfinfo~ continues to compile correctly. See [[id:A401543C-308B-4175-8212-5B78CD6C8389][Add a Dockerfile to automate server compilation testing]] for more details.
-
-The idea here is to make the ~server/autobuild~ file the single place from which installation can happen on any Operating System. This makes building ~pdf-tools~ dead simple via the ~Makefile~.
-
-This seems like a lot of work, but it is not. If you need a reference, search for ~os_gentoo~ or ~os_debian~ in the ~server/autobuild~ file and see how these are setup and used. The functions are used to install dependencies on Gentoo and Debian respectively, and are simple to copy / change.
-
-When you make your changes, please be sure to test [[id:1CBE7325-A5A1-479B-9A98-BEEFBAC9D8FF][the elisp changes]] as well as [[id:5327945D-9D92-4462-8172-7237DEF4C359][the server code changes]] as described in the linked articles.
-
-** I am on a Macbook M1 and pdf-tools installation fails with a stack-trace
-:PROPERTIES:
-:CREATED:  [2022-05-09 Mon 20:29]
-:ID:       96D389D8-DD23-4FB0-996C-2D6F70A76BB2
-:END:
-There have been a number of issues around ~pdf-tools~ installation problems on M1. =M-x pdf-tools-install= throws the following stack trace:
-#+begin_example
-  1 warning generated.
-  ld: warning: ignoring file /opt/homebrew/opt/gettext/lib/libintl.dylib, building for macOS-x86_64 but attempting to link with file built for macOS-arm64
-  ld: warning: ignoring file /opt/homebrew/Cellar/glib/2.72.1/lib/libglib-2.0.dylib, building for macOS-x86_64 but attempting to link with file built for macOS-arm64
-  ld: warning: ignoring file /opt/homebrew/Cellar/poppler/22.02.0/lib/libpoppler-glib.dylib, building for macOS-x86_64 but attempting to link with file built for macOS-arm64
-  ld: warning: ignoring file /opt/homebrew/Cellar/glib/2.72.1/lib/libgobject-2.0.dylib, building for macOS-x86_64 but attempting to link with file built for macOS-arm64
-  ld: warning: ignoring file /opt/homebrew/Cellar/poppler/22.02.0/lib/libpoppler.dylib, building for macOS-x86_64 but attempting to link with file built for macOS-arm64
-  ld: warning: ignoring file /opt/homebrew/Cellar/cairo/1.16.0_5/lib/libcairo.dylib, building for macOS-x86_64 but attempting to link with file built for macOS-arm64
-  ld: warning: ignoring file /opt/homebrew/Cellar/libpng/1.6.37/lib/libpng16.dylib, building for macOS-x86_64 but attempting to link with file built for macOS-arm64
-  ld: warning: ignoring file /opt/homebrew/Cellar/zlib/1.2.11/lib/libz.dylib, building for macOS-x86_64 but attempting to link with file built for macOS-arm64
-  Undefined symbols for architecture x86_64:
-#+end_example
-
-This happens because M1 architecture is =ARM64=, whereas the Emacs App you are using has been compiled for the =x86_64= architecture. The way to solve this problem is to install a version of Emacs which has been compiled for the M1. As of today, [2022-05-09 Mon], the latest version of Emacs available on https://emacsformacosx.com/ is natively compiled and you will not face these issues on it. Please remove your current Emacs App and install it from https://emacsformacosx.com/.
-
-Thank you.
-
-PS: How do I know if the Emacs I'm running has been compiled correctly?
-
-You can see this by opening the =Activity Monitor=, selecting =Emacs=, clicking on the =Info= key, and then clicking on =Sample=. The =Code Type= field in the Sample output will show you how your Application has been compiled. Here is the output for EmacsForMacOSX (you can see that it's =ARM64=):
-#+begin_example
-  Sampling process 61824 for 3 seconds with 1 millisecond of run time between samples
-  Sampling completed, processing symbols...
-  Analysis of sampling Emacs-arm64-11 (pid 61824) every 1 millisecond
-  Process:         Emacs-arm64-11 [61824]
-  Path:            /Applications/Emacs.app/Contents/MacOS/Emacs-arm64-11
-  Load Address:    0x1007f0000
-  Identifier:      org.gnu.Emacs
-  Version:         Version 28.1 (9.0)
-  Code Type:       ARM64
-  Platform:        macOS
-#+end_example
-
-If your Emacs is compiled for x86, the =Code Type= will be =x86_64=.
 
 ** I am a developer, making changes to the pdf-tools source code
 :PROPERTIES:

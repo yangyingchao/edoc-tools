@@ -2,7 +2,7 @@ use std::path::Path;
 
 fn main() {
     let out = std::env::var("OUT_DIR").expect("OUT_DIR set by cargo");
-    let src = Path::new("..").join("server");
+    let src = Path::new("synctex");
     let mut build = cc::Build::new();
     build
         .file(src.join("synctex_parser.c"))

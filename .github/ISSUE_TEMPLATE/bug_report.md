@@ -25,7 +25,7 @@ Please complete the following information:
 
 - OS: [eg: MacOS Catalina]
 - Emacs Version: [This should be the output of `M-x emacs-version`]
-- Poppler Version: [eg: output of `brew info poppler` and similarly for other OSs]
+- `epdfinfo` path: [output of `M-: pdf-info-epdfinfo-program`]
 
 **Your pdf-tools install**
 Please complete the following information:

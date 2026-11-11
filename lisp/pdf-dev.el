@@ -48,7 +48,7 @@
 It does the following:
 
 Quits the server and sets `pdf-info-epdfinfo-program' to
-../server/epdfinfo.
+../server-rs/epdfinfo.
 
 Installs a `compilation-finish-functions' which will restart
 epdfinfo after a successful recompilation.
@@ -64,7 +64,7 @@ Sets up `load-path' and reloads all PDF Tools Lisp files."
       (setq pdf-info-epdfinfo-program
             (expand-file-name
              "epdfinfo"
-             (expand-file-name "server" pdf-dev-root-directory)))
+             (expand-file-name "server-rs" pdf-dev-root-directory)))
       (pdf-info-quit)
       (pdf-dev-reload))
      (t

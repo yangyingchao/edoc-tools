@@ -81,7 +81,8 @@
                (try-directory
                 (file-name-directory (car command-line-args))))
           ;; If we are running directly from the git repo.
-          (try-directory (expand-file-name "../server"))
+          (or (try-directory (expand-file-name "../server-rs"))
+              (try-directory (expand-file-name "../server")))
           ;; Fall back to epdfinfo in the directory of this file.
           (expand-file-name executable))))
   "Filename of the epdfinfo executable."

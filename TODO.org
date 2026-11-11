@@ -11,8 +11,6 @@ Recent poppler versions have some support for editing forms.
 ** TODO Updating the annot list buffer is too slow
 + Update it incrementally.
 + Possibly skip the update if the buffer is not visible.
-* epdfinfo
-** TODO Maybe split the code up in several files.
 * pdf-view
 ** TODO Provide some kind of multi-page view
 ** TODO Make persistent scrolling relative

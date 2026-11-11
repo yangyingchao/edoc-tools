@@ -211,218 +211,26 @@ PDF buffers."
       default-directory)
   "The directory from where this library was first loaded.")
 
-(defvar pdf-tools-msys2-directory nil)
-
-(defcustom pdf-tools-installer-os nil
-  "Specifies which installer to use.
-
-If nil, the installer is chosen automatically.  This variable is
-useful if you have multiple installers present on your
-system (e.g. nix on arch linux)"
-  :group 'pdf-tools
-  :type '(choice
-          (const :tag "Choose automatically" nil)
-          string))
-
-(defun pdf-tools-identify-build-directory (directory)
-  "Return non-nil, if DIRECTORY appears to contain the epdfinfo source.
-
-Returns the expanded directory-name of DIRECTORY or nil."
-  (setq directory (file-name-as-directory
-                   (expand-file-name directory)))
-  (and (file-exists-p (expand-file-name "autobuild" directory))
-       (file-exists-p (expand-file-name "epdfinfo.c" directory))
-       directory))
-
-(defun pdf-tools-locate-build-directory ()
-  "Attempt to locate a source directory.
-
-Returns a appropriate directory or nil.  See also
-`pdf-tools-identify-build-directory'."
-  (cl-some #'pdf-tools-identify-build-directory
-           (list default-directory
-                 (expand-file-name "build/server" pdf-tools-directory)
-                 (expand-file-name "server")
-                 (expand-file-name "server" pdf-tools-directory)
-                 (expand-file-name "../server" pdf-tools-directory))))
-
-(defun pdf-tools-msys2-directory (&optional noninteractive-p)
-  "Locate the Msys2 installation directory.
-
-Ask the user if necessary and NONINTERACTIVE-P is nil.
-Returns always nil, unless `system-type' equals windows-nt."
-  (cl-labels ((if-msys2-directory (directory)
-                (and (stringp directory)
-                     (file-directory-p directory)
-                     (file-exists-p
-                      (expand-file-name "usr/bin/bash.exe" directory))
-                     directory)))
-    (when (eq system-type 'windows-nt)
-      (setq pdf-tools-msys2-directory
-            (or pdf-tools-msys2-directory
-                (cl-some #'if-msys2-directory
-                         (cl-mapcan
-                          (lambda (drive)
-                            (list (format "%c:/msys64" drive)
-                                  (format "%c:/msys32" drive)))
-                          (number-sequence ?c ?z)))
-                (unless (or noninteractive-p
-                            (not (y-or-n-p "Do you have Msys2 installed ? ")))
-                  (if-msys2-directory
-                   (read-directory-name
-                    "Please enter Msys2 installation directory: " nil nil t))))))))
-
-(defun pdf-tools-msys2-mingw-bin ()
-  "Return the location of /mingw*/bin."
-  (when (pdf-tools-msys2-directory)
-    (let ((arch (intern (car (split-string system-configuration "-" t)))))
-    (expand-file-name
-     (format "./mingw%s/bin" (if (eq arch 'x86_64) "64" "32"))
-     (pdf-tools-msys2-directory)))))
-
-(defun pdf-tools-find-bourne-shell ()
-  "Locate a usable sh."
-  (or (and (eq system-type 'windows-nt)
-           (let* ((directory (pdf-tools-msys2-directory)))
-             (when directory
-               (expand-file-name "usr/bin/bash.exe" directory))))
-      (executable-find "sh")))
-
-(defun pdf-tools-build-server (target-directory
-                               &optional
-                               skip-dependencies-p
-                               force-dependencies-p
-                               callback
-                               build-directory)
-  "Build the epdfinfo program in the background.
-
-Install into TARGET-DIRECTORY, which should be a directory.
-
-If CALLBACK is non-nil, it should be a function.  It is called
-with the compiled executable as the single argument or nil, if
-the build failed.
-
-Expect sources to be in BUILD-DIRECTORY.  If nil, search for it
-using `pdf-tools-locate-build-directory'.
-
-See `pdf-tools-install' for the SKIP-DEPENDENCIES-P and
-FORCE-DEPENDENCIES-P arguments.
-
-Returns the buffer of the compilation process."
-
-  (unless callback (setq callback #'ignore))
-  (unless build-directory
-    (setq build-directory (pdf-tools-locate-build-directory)))
-  (cl-check-type target-directory (satisfies file-directory-p))
-  (setq target-directory (file-name-as-directory
-                          (expand-file-name target-directory)))
-  (cl-check-type build-directory (and (not null)
-                                      (satisfies file-directory-p)))
-  (when (and skip-dependencies-p force-dependencies-p)
-    (error "Can't simultaneously skip and force dependencies"))
-  (let* ((compilation-auto-jump-to-first-error nil)
-         (compilation-scroll-output t)
-         (shell-file-name (pdf-tools-find-bourne-shell))
-         (shell-command-switch "-c")
-         (process-environment process-environment)
-         (default-directory build-directory)
-         (autobuild (shell-quote-argument
-                     (expand-file-name "autobuild" build-directory)))
-         (msys2-p (equal "bash.exe" (file-name-nondirectory shell-file-name))))
-    (unless shell-file-name
-      (error "No suitable shell found"))
-    (when msys2-p
-      (push "BASH_ENV=/etc/profile" process-environment))
-    (let ((executable
-           (expand-file-name
-            (concat "epdfinfo" (and (eq system-type 'windows-nt) ".exe"))
-            target-directory))
-          (compilation-buffer
-           (compilation-start
-            (format "%s -i %s%s%s"
-                    autobuild
-                    (shell-quote-argument target-directory)
-                    (cond
-                     (skip-dependencies-p " -D")
-                     (force-dependencies-p " -d")
-                     (t ""))
-                    (if pdf-tools-installer-os (concat " --os " pdf-tools-installer-os) ""))
-            t)))
-      ;; In most cases user-input is required, so select the window.
-      (if (get-buffer-window compilation-buffer)
-          (select-window (get-buffer-window compilation-buffer))
-        (pop-to-buffer compilation-buffer))
-      (with-current-buffer compilation-buffer
-        (setq-local compilation-error-regexp-alist nil)
-        (add-hook 'compilation-finish-functions
-                  (lambda (_buffer status)
-                    (funcall callback
-                             (and (equal status "finished\n")
-                                  executable)))
-                  nil t)
-        (current-buffer)))))
-
-
-;; * ================================================================== *
-;; * Initialization
-;; * ================================================================== *
-
 ;;;###autoload
 (defun pdf-tools-install (&optional no-query-p skip-dependencies-p
                                     no-error-p force-dependencies-p)
   "Install PDF-Tools in all current and future PDF buffers.
 
-If the `pdf-info-epdfinfo-program' is not running or does not
-appear to be working, attempt to rebuild it.  If this build
-succeeded, continue with the activation of the package.
-Otherwise fail silently, i.e. no error is signaled.
-
-Build the program (if necessary) without asking first, if
-NO-QUERY-P is non-nil.
-
-Don't attempt to install system packages, if SKIP-DEPENDENCIES-P
-is non-nil.
-
-Do not signal an error in case the build failed, if NO-ERROR-P is
-non-nil.
-
-Attempt to install system packages (even if it is deemed
-unnecessary), if FORCE-DEPENDENCIES-P is non-nil.
-
-Note that SKIP-DEPENDENCIES-P and FORCE-DEPENDENCIES-P are
-mutually exclusive.
-
-Note further, that you can influence the installation directory
-by setting `pdf-info-epdfinfo-program' to an appropriate
-value (e.g. ~/bin/epdfinfo) before calling this function.
+The epdfinfo server must already exist.  Build it with `make' in
+the pdf-tools source tree, or set `pdf-info-epdfinfo-program' to
+an existing executable.  This function no longer compiles the
+server itself; NO-QUERY-P, SKIP-DEPENDENCIES-P, NO-ERROR-P and
+FORCE-DEPENDENCIES-P are accepted for backward compatibility and
+ignored.
 
 See `pdf-view-mode' and `pdf-tools-enabled-modes'."
   (interactive)
+  (ignore no-query-p skip-dependencies-p no-error-p force-dependencies-p)
   (if (or (pdf-info-running-p)
           (ignore-errors (pdf-info-check-epdfinfo) t))
       (pdf-tools-install-noverify)
-    (let ((target-directory
-           (or (and (stringp pdf-info-epdfinfo-program)
-                    (file-name-directory
-                     pdf-info-epdfinfo-program))
-               pdf-tools-directory)))
-      (if (or no-query-p
-              (y-or-n-p "Need to (re)build the epdfinfo program, do it now ?"))
-        (pdf-tools-build-server
-         target-directory
-         skip-dependencies-p
-         force-dependencies-p
-         (lambda (executable)
-           (let ((msg (format
-                       "Building the PDF Tools server %s"
-                       (if executable "succeeded" "failed"))))
-             (if (not executable)
-                 (funcall (if no-error-p #'message #'error) "%s" msg)
-               (message "%s" msg)
-               (setq pdf-info-epdfinfo-program executable)
-               (let ((pdf-info-restart-process-p t))
-                 (pdf-tools-install-noverify))))))
-        (message "PDF Tools not activated")))))
+    (user-error
+     "No working epdfinfo program; build it with `make' or set `pdf-info-epdfinfo-program'")))
 
 (defun pdf-tools-install-noverify ()
   "Like `pdf-tools-install', but skip checking `pdf-info-epdfinfo-program'."
