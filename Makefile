@@ -8,9 +8,9 @@ endif
 emacs = $(EMACS)
 
 CARGO ?= cargo
-rust_sources = $(shell find server-rs/src -name '*.rs')
-server_target = server-rs/target/release/epdfinfo
-server_bin = server-rs/epdfinfo
+rust_sources = $(shell find server/src -name '*.rs')
+server_target = server/target/release/epdfinfo
+server_bin = server/epdfinfo
 
 .PHONY: all build bytecompile byteclean clean distclean
 
@@ -20,9 +20,9 @@ all: build
 # `pdf-info-epdfinfo-program' looks when running from the git repo.
 build: $(server_bin)
 
-$(server_bin): server-rs/Cargo.toml server-rs/Cargo.lock server-rs/build.rs \
-		$(wildcard server-rs/synctex/*) $(rust_sources)
-	$(CARGO) build --release --manifest-path server-rs/Cargo.toml
+$(server_bin): server/Cargo.toml server/Cargo.lock server/build.rs \
+		$(wildcard server/synctex/*) $(rust_sources)
+	$(CARGO) build --release --manifest-path server/Cargo.toml
 	cp $(server_target) $@
 
 # Compile the Lisp sources.  Dependencies such as `tablist' must be
@@ -40,4 +40,4 @@ clean: byteclean
 	rm -f -- $(server_bin)
 
 distclean: clean
-	$(CARGO) clean --manifest-path server-rs/Cargo.toml
+	$(CARGO) clean --manifest-path server/Cargo.toml

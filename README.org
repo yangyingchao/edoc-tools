@@ -77,7 +77,7 @@ Actually, displaying PDF files is just one part of ~pdf-tools~. The PDF engine c
 Installing this package via NonGNU ELPA or MELPA or any of the other package managers is straightforward and should just work! You should not require any manual changes. The documentation below is *only if you are installing from source*, or for troubleshooting / debugging purposes.
 
 ~pdf-tools~ requires a server ~epdfinfo~ to run against. The server is the Rust program
-under ~server-rs/~; it is *not* compiled automatically when the Lisp package is activated.
+under ~server/~; it is *not* compiled automatically when the Lisp package is activated.
 The following steps need to be followed *in this order*, to install ~pdf-tools~ and ~epdfinfo~
 correctly:
 
@@ -103,7 +103,7 @@ Build the server from the source tree:
   $ make
 #+end_src
 
-~make~ runs ~cargo build --release~ and copies the executable to ~server-rs/epdfinfo~.
+~make~ runs ~cargo build --release~ and copies the executable to ~server/epdfinfo~.
 When running from the git repository, ~pdf-info-epdfinfo-program~ finds that file
 automatically. Otherwise put it on ~PATH~ or set ~pdf-info-epdfinfo-program~ explicitly.
 
@@ -115,7 +115,7 @@ If you face a problem, please report on the issue tracker.
 :ID:       fb5cef15-fed4-4dec-a443-52f7c00c7831
 :END:
 Distro packages still ship the C implementation of ~epdfinfo~. This fork only provides the Rust
-server under ~server-rs/~, so build it from source instead of installing ~elpa-pdf-tools-server~.
+server under ~server/~, so build it from source instead of installing ~elpa-pdf-tools-server~.
 
 *** Installing the epdfinfo server from source on Windows (+ Gotchas)
 :PROPERTIES:
@@ -131,7 +131,7 @@ Install [[https://www.msys2.org/][MSYS2]], open a ~mingw64~ shell (*Note:* use ~
   $ make
 #+end_src
 
-~make~ produces ~server-rs/epdfinfo.exe~. Copy it into the ~pdf-tools/~ installation
+~make~ produces ~server/epdfinfo.exe~. Copy it into the ~pdf-tools/~ installation
 directory in your Emacs, or add its directory to ~PATH~. Do not use Cygwin: its path handling
 breaks the server.
 
@@ -473,7 +473,7 @@ Toggling debug mode prints information about various operations in the ~*Message
 :END:
 You can go to the ~pdf-tools~ folder and run
 #+begin_src sh
-  $ cargo test --release --manifest-path server-rs/Cargo.toml
+  $ cargo test --release --manifest-path server/Cargo.toml
 #+end_src
 to run the server unit tests. ~make~ builds the release binary; it does not run the ERT suite.
 
