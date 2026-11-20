@@ -1,24 +1,24 @@
 ;; -*- lexical-binding: t -*-
 
-(require 'pdf-loader)
+(require 'edoc-loader)
 (require 'ert)
 (require 'cl-lib)
 
-(ert-deftest pdf-loader-activation ()
+(ert-deftest edoc-loader-activation ()
   :expected-result :failed ;; Until someone figures out how to run the
                            ;; tests w/o loading all of the package.
-  (should-not (memq 'pdf-tools features))
-  (pdf-loader-install)
+  (should-not (memq 'edoc-tools features))
+  (edoc-loader-install)
   (with-current-buffer (find-file "test.pdf")
-    (should (eq major-mode 'pdf-view-mode))))
+    (should (eq major-mode 'edoc-view-mode))))
 
-(ert-deftest pdf-loader-install/uninstall-alists ()
+(ert-deftest edoc-loader-install/uninstall-alists ()
   (cl-labels ((alists-installed-p ()
-                (and (assoc pdf-loader--auto-mode-alist-item
+                (and (assoc edoc-loader--auto-mode-alist-item
                             auto-mode-alist)
-                     (assoc pdf-loader--magic-mode-alist-item
+                     (assoc edoc-loader--magic-mode-alist-item
                             magic-mode-alist))))
-    (pdf-loader--install #'ignore)
+    (edoc-loader--install #'ignore)
     (should (alists-installed-p))
-    (pdf-loader--uninstall)
+    (edoc-loader--uninstall)
     (should-not (alists-installed-p))))
