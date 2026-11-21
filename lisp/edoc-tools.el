@@ -214,14 +214,14 @@ PDF buffers."
 ;;;###autoload
 (defun edoc-tools-install (&optional no-query-p skip-dependencies-p
                                     no-error-p force-dependencies-p)
-  "Install PDF-Tools in all current and future PDF buffers.
+  "Install edoc-tools in all current and future PDF buffers.
 
-The kc server must already exist.  Build it with `make' in
-the edoc-tools source tree, or set `edoc-info-kc-program' to
-an existing executable.  This function no longer compiles the
-server itself; NO-QUERY-P, SKIP-DEPENDENCIES-P, NO-ERROR-P and
-FORCE-DEPENDENCIES-P are accepted for backward compatibility and
-ignored.
+The kc server must already exist.  Provide it on PATH or set
+`edoc-info-kc-program' to an existing executable; the server is built by
+the knowcraft project and is not part of this repository.  This function
+does not compile the server itself; NO-QUERY-P, SKIP-DEPENDENCIES-P,
+NO-ERROR-P and FORCE-DEPENDENCIES-P are accepted for backward
+compatibility and ignored.
 
 See `edoc-view-mode' and `edoc-tools-enabled-modes'."
   (interactive)
@@ -230,7 +230,7 @@ See `edoc-view-mode' and `edoc-tools-enabled-modes'."
           (ignore-errors (edoc-info-check-kc) t))
       (edoc-tools-install-noverify)
     (user-error
-     "No working kc program; build it with `make' or set `edoc-info-kc-program'")))
+     "No working kc program; put it on PATH or set `edoc-info-kc-program'")))
 
 (defun edoc-tools-install-noverify ()
   "Like `edoc-tools-install', but skip checking `edoc-info-kc-program'."
@@ -256,7 +256,7 @@ See `edoc-view-mode' and `edoc-tools-enabled-modes'."
           (edoc-view-mode))))))
 
 (defun edoc-tools-uninstall ()
-  "Uninstall PDF-Tools in all current and future PDF buffers."
+  "Uninstall edoc-tools in all current and future PDF buffers."
   (interactive)
   (edoc-info-quit)
   (setq-default auto-mode-alist
@@ -327,7 +327,7 @@ MODES defaults to `edoc-tools-enabled-modes'."
   (help-setup-xref (list #'edoc-tools-help)
                    (called-interactively-p 'interactive))
   (with-help-window (help-buffer)
-    (princ "PDF Tools Help\n\n")
+    (princ "edoc-tools Help\n\n")
     (princ "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
     (dolist (m (cons 'edoc-view-mode
                      (sort (copy-sequence edoc-tools-modes) #'string<)))

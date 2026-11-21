@@ -1,232 +1,260 @@
-#+TITLE:     PDF Tools README
+#+TITLE:     edoc-tools README
 #+AUTHOR:    Andreas Politz
 #+EMAIL:     mail@andreas-politz.de
 #+Maintainer: Vedang Manerikar
 #+Maintainer_Email: vedang.manerikar@gmail.com
 
-[[https://elpa.nongnu.org/nongnu/pdf-tools.html][http://elpa.nongnu.org/nongnu/pdf-tools.svg]]
-[[https://stable.melpa.org/#/pdf-tools][http://stable.melpa.org/packages/pdf-tools-badge.svg]]
-[[https://melpa.org/#/pdf-tools][https://melpa.org/packages/pdf-tools-badge.svg]]
+Fork 自 pdf-tools：https://github.com/vedang/pdf-tools
 
 =======
-The ~pdf-tools~ Wiki is maintained at https://pdftools.wiki. Head to the site if you find it easier to navigate a website for reading a manual. All the topics on the site are listed at https://pdftools.wiki/impulse.
+上游 ~pdf-tools~ 的 Wiki 在 https://pdftools.wiki 维护，可作为本项目的参考手册；本文档描述的是 ~edoc-tools~
+自身的行为。
 
-* Table of Contents                                            :noexport:TOC_3_gh:
-- [[#about-edoc-tools][About PDF Tools]]
-- [[#installing-edoc-tools][Installing edoc-tools]]
-  - [[#installing-the-kc-server][Installing the kc server]]
-    - [[#installing-the-kc-server-from-package-managers][Installing the kc server from package managers]]
-    - [[#installing-the-kc-server-from-source-on-windows--gotchas][Installing the kc server from source on Windows (+ Gotchas)]]
-    - [[#installing-the-kc-server-from-source-on-macos--gotchas][Installing the kc server from source on macOS (+ Gotchas)]]
-    - [[#common-installation-gotchas][Common installation gotchas]]
-    - [[#installing-optional-features][Installing optional features]]
-  - [[#installing-edoc-tools-elisp-code][Installing edoc-tools elisp code]]
-  - [[#updating-edoc-tools][Updating edoc-tools]]
-- [[#features][Features]]
-  - [[#view-and-navigate-pdfs][View and Navigate PDFs]]
-    - [[#keybindings-for-navigating-pdf-documents][Keybindings for navigating PDF documents]]
-    - [[#keybindings-for-manipulating-display-of-pdf][Keybindings for manipulating display of PDF]]
-  - [[#annotations][Annotations]]
-    - [[#keybindings-for-working-with-annotations][Keybindings for working with Annotations]]
-  - [[#working-with-auctex][Working with AUCTeX]]
-    - [[#keybindings-for-working-with-auctex][Keybindings for working with AUCTeX]]
-  - [[#miscellaneous-features][Miscellaneous features]]
-    - [[#keybindings-for-miscellaneous-features-in-edoc-tools][Keybindings for miscellaneous features in PDF tools]]
-  - [[#easy-help-for-edoc-tools-features][Easy Help for PDF Tools features]]
-  - [[#configuring-edoc-tools-features][Configuring PDF Tools features]]
-- [[#known-problems][Known problems]]
+* 目录                                                           :noexport:TOC_3_gh:
+- [[#about-edoc-tools][关于 edoc-tools]]
+- [[#installing-edoc-tools][安装 edoc-tools]]
+  - [[#installing-the-kc-server][安装 kc 服务器]]
+    - [[#installing-the-kc-server-from-package-managers][用发行版包管理器安装]]
+    - [[#installing-the-kc-server-from-source-on-windows--gotchas][在 Windows 上从源码构建（注意事项）]]
+    - [[#installing-the-kc-server-from-source-on-macos--gotchas][在 macOS 上从源码构建（注意事项）]]
+    - [[#common-installation-gotchas][常见安装问题]]
+    - [[#installing-optional-features][安装可选功能]]
+  - [[#installing-edoc-tools-elisp-code][安装 edoc-tools 的 Lisp 代码]]
+  - [[#updating-edoc-tools][更新 edoc-tools]]
+- [[#features][功能]]
+  - [[#view-and-navigate-pdfs][查看与浏览 PDF]]
+    - [[#keybindings-for-navigating-pdf-documents][浏览键位]]
+    - [[#keybindings-for-manipulating-display-of-pdf][调整显示的键位]]
+  - [[#annotations][批注]]
+    - [[#keybindings-for-working-with-annotations][批注键位]]
+  - [[#working-with-auctex][与 AUCTeX 配合]]
+    - [[#keybindings-for-working-with-auctex][AUCTeX 键位]]
+  - [[#miscellaneous-features][其他功能]]
+    - [[#keybindings-for-miscellaneous-features-in-edoc-tools][其他功能键位]]
+  - [[#easy-help-for-edoc-tools-features][查看功能帮助]]
+  - [[#configuring-edoc-tools-features][配置功能]]
+- [[#known-problems][已知问题]]
   - [[#linum-mode][linum-mode]]
   - [[#display-line-numbers-mode][display-line-numbers-mode]]
   - [[#auto-revert][auto-revert]]
   - [[#sublimity][sublimity]]
-  - [[#text-selection-is-not-transparent-in-pdfs-ocred-with-tesseract][Text selection is not transparent in PDFs OCRed with Tesseract]]
-- [[#key-bindings-in-edoc-tools][Key-bindings in PDF Tools]]
-- [[#tips-and-tricks-for-developers][Tips and Tricks for Developers]]
-  - [[#turn-on-debug-mode][Turn on debug mode]]
-  - [[#run-server-tests-locally][Run server tests locally]]
-  - [[#issue-template-for-bug-reports][Issue Template for Bug Reports]]
-    - [[#describe-the-bug][Describe the bug]]
-    - [[#steps-to-reproduce-the-behaviour][Steps To Reproduce the behaviour:]]
-    - [[#what-is-the-expected-behaviour][What is the expected behaviour?]]
-    - [[#desktop][Desktop]]
-    - [[#your-edoc-tools-install][Your edoc-tools install]]
-    - [[#additional-context][Additional context]]
-- [[#faqs][FAQs]]
-  - [[#pdfs-are-not-rendering-well][PDFs are not rendering well!]]
-  - [[#what-emacs-versions-does-edoc-tools-support][What Emacs versions does edoc-tools support?]]
-  - [[#i-am-a-developer-making-changes-to-the-edoc-tools-source-code][I am a developer, making changes to the edoc-tools source code]]
+  - [[#text-selection-is-not-transparent-in-pdfs-ocred-with-tesseract][Tesseract OCR 过的 PDF 里文本选区不透明]]
+- [[#key-bindings-in-edoc-tools][键位总表]]
+- [[#tips-and-tricks-for-developers][开发者提示]]
+  - [[#turn-on-debug-mode][打开调试模式]]
+  - [[#run-server-tests-locally][本地运行测试]]
+  - [[#issue-template-for-bug-reports][缺陷报告模板]]
+    - [[#describe-the-bug][描述缺陷]]
+    - [[#steps-to-reproduce-the-behaviour][复现步骤]]
+    - [[#what-is-the-expected-behaviour][期望行为]]
+    - [[#desktop][桌面环境]]
+    - [[#your-edoc-tools-install][你的 edoc-tools 安装信息]]
+    - [[#additional-context][其他信息]]
+- [[#faqs][常见问题]]
+  - [[#kc-has-stopped-working][kc 停止工作了]]
+  - [[#pdfs-are-not-rendering-well][PDF 渲染效果不好]]
+  - [[#what-emacs-versions-does-edoc-tools-support][支持哪些 Emacs 版本]]
+  - [[#i-am-a-developer-making-changes-to-the-edoc-tools-source-code][我要改 edoc-tools 的源码]]
 
-* About PDF Tools
+* 关于 edoc-tools
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 18:34]
 :ID:       5a884389-6aec-498a-90d5-f37168809b4f
+:CUSTOM_ID: about-edoc-tools
 :EXPORT_FILE_NAME: index
 :END:
-PDF Tools is, among other things, a replacement of DocView for PDF files. The key difference is that pages are not pre-rendered by, say, ~ghostscript~ and stored in the file-system, but rather created on-demand and stored in memory.
+~edoc-tools~ 是 PDF 文件的查看器，可替代 DocView。区别在于页面不是由 ~ghostscript~ 之类工具预先渲染
+再存到文件系统，而是按需渲染、保存在内存中。
 
-This rendering is performed by a server program called ~kc~, which reads requests from Emacs and returns the proper results, i.e. the PNG image of a page. PDF files are rendered by ~pdfcraft~; Word documents (~.docx~ and ~.doc~) are laid out and rendered by ~WordCraft~ in the same process.
+渲染由名为 ~kc~ 的服务器程序完成。它读取 Emacs 发来的请求并返回结果，例如某一页的 PNG 图像。
+PDF 由 ~pdfcraft~ 渲染；Word 文档（~.docx~ 和 ~.doc~）由 ~WordCraft~ 在同一进程内排版并渲染。
 
-Actually, displaying PDF files is just one part of ~edoc-tools~. The PDF engine can provide all kinds of information about a document and is also able to modify it, so there is a lot more we can do with it. [[https://www.dailymotion.com/video/x2bc1is][Watch this video for a detailed demo!]]
+显示 PDF 只是 ~edoc-tools~ 的一部分。PDF 引擎还能提供文档的各种信息，也能修改文档，因此可做的事情
+远不止查看。[[https://www.dailymotion.com/video/x2bc1is][这里有详细的演示视频。]]
 
-* Installing edoc-tools
+* 安装 edoc-tools
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 18:34]
 :ID:       6ceea50c-cbaa-4d8a-b450-8067c5e8c9da
+:CUSTOM_ID: installing-edoc-tools
 :NEURON_DIRTREE_DISPLAY: false
 :END:
-Installing this package via NonGNU ELPA or MELPA or any of the other package managers is straightforward and should just work! You should not require any manual changes. The documentation below is *only if you are installing from source*, or for troubleshooting / debugging purposes.
+通过 NonGNU ELPA、MELPA 或其他包管理器安装通常可以直接工作，不需要手工改动。只有在从源码安装，
+或排查、调试问题时，才需要看下面的步骤。
 
-~edoc-tools~ requires a server ~kc~ to run against. The server is a separate binary, invoked
-as ~kc doc-server~; it is *not* compiled automatically when the Lisp package is activated.
-The following steps need to be followed *in this order*, to install ~edoc-tools~ and ~kc~
-correctly:
+~edoc-tools~ 需要一个 ~kc~ 服务器。服务器是独立二进制，以 ~kc doc-server~ 方式调用；激活 Lisp 包时
+不会自动编译它。安装 ~edoc-tools~ 和 ~kc~ 请按下面的顺序进行：
 
-- [[brain-child:e305cd0a-e798-4c2b-af27-21bcd936c1c9][Installing the kc server]]
-- [[brain-child:32c4fc3b-b4ea-43bd-b92c-bdf2d3831fcf][Installing edoc-tools elisp code]]
+- [[brain-child:e305cd0a-e798-4c2b-af27-21bcd936c1c9][安装 kc 服务器]]
+- [[brain-child:32c4fc3b-b4ea-43bd-b92c-bdf2d3831fcf][安装 edoc-tools 的 Lisp 代码]]
 
-** Installing the kc server
+** 安装 kc 服务器
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 18:34]
 :ID:       e305cd0a-e798-4c2b-af27-21bcd936c1c9
+:CUSTOM_ID: installing-the-kc-server
 :END:
-The ~kc~ binary replaces the old ~epdfinfo~ server and behaves identically. It is built
-in its own repository, not in this one. Put ~kc~ on ~PATH~, or set
-~pdf-info-kc-program~ explicitly; by default the Lisp code looks it up with
-~executable-find~.
+~kc~ 二进制取代了旧的 ~epdfinfo~ 服务器，行为一致。它由 knowcraft 项目构建，不随本仓库发布；
+安装步骤见该项目的 README：https://github.com/yangyingchao/knowcraft 。
 
-If you face a problem, please report on the issue tracker.
+从源码构建：
+#+begin_src sh
+  $ git clone https://github.com/yangyingchao/knowcraft
+  $ cd knowcraft
+  $ cargo build --release -p knowcraft-cli
+#+end_src
+产物是 ~target/release/kc~。构建需要 Rust stable、C 工具链、~pkg-config~ 与 GLib 开发库；含 GUI 的
+完整构建另外需要 GTK 4.12+、GtkSourceView 5、Poppler GLib、Fontconfig、GStreamer。
 
-*** Installing the kc server from package managers
+把 ~kc~ 放进 ~PATH~，或用 ~edoc-info-kc-program~ 指向它；Lisp 代码默认用 ~executable-find~ 查找。
+edoc-tools 以 ~kc doc-server~ 启动它，可选地把 stderr 追写到 ~edoc-info-kc-error-filename~。
+
+~kc~ 自身的问题请报到 knowcraft 仓库的 issue tracker；edoc-tools 的问题报到本仓库。
+
+*** 用发行版包管理器安装
 :PROPERTIES:
 :CREATED:  [2022-02-13 Sun 23:10]
 :ID:       fb5cef15-fed4-4dec-a443-52f7c00c7831
+:CUSTOM_ID: installing-the-kc-server-from-package-managers
 :END:
-Distro packages still ship the C implementation of ~epdfinfo~, which this project no
-longer uses. Install ~kc~ from its own repository instead.
+发行版的包管理器提供的仍是 ~epdfinfo~ 的 C 实现，本项目已不再使用。请改从 ~kc~ 自己的仓库安装。
 
-*** Installing the kc server from source on Windows (+ Gotchas)
+*** 在 Windows 上从源码构建（注意事项）
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 18:34]
 :ID:       d14e01ff-9bd5-47ee-86fc-859b4499d5d7
+:CUSTOM_ID: installing-the-kc-server-from-source-on-windows--gotchas
 :END:
-Build ~kc~ from its own repository (the former ~epdfinfo~ Rust server) with ~cargo build
---release~, then copy the binary into the ~edoc-tools/~ installation directory in your
-Emacs, or add its directory to ~PATH~. Do not use Cygwin: its path handling
-breaks the server.
+构建好之后把 ~kc~ 放进 ~PATH~，或用 ~edoc-info-kc-program~ 指向它。不要用 Cygwin：它的路径处理会让
+服务器出错。
 
-*** Installing the kc server from source on macOS (+ Gotchas)
+*** 在 macOS 上从源码构建（注意事项）
 :PROPERTIES:
 :CREATED:  [2022-10-11 Tue 11:42]
 :ID:       60CBCD65-5654-400A-913F-8B31901D071C
+:CUSTOM_ID: installing-the-kc-server-from-source-on-macos--gotchas
 :END:
-Build ~kc~ from its own repository with ~cargo build --release~ and add the binary to
-~PATH~.
+构建好之后把 ~kc~ 放进 ~PATH~，或用 ~edoc-info-kc-program~ 指向它。
 
-*** Common installation gotchas
+*** 常见安装问题
 :PROPERTIES:
 :CREATED:  [2022-10-11 Tue 11:04]
 :ID:       3F4C0FDF-6AC0-4845-BA2D-ED7C2F40D894
+:CUSTOM_ID: common-installation-gotchas
 :END:
-If ~kc~ is not found, it is not on ~PATH~ or ~pdf-info-kc-program~ does not point at it;
-check with ~M-x pdf-info-check-kc~.
+找不到 ~kc~ 时，说明它不在 ~PATH~ 上，或 ~edoc-info-kc-program~ 没有指向它；用
+~M-x edoc-info-check-kc~ 检查。
 
-*** Installing optional features
+~edoc-tools-install~ 激活前会先做这项检查，~kc~ 不可用时直接报错 ~No working kc program~，
+不会完成激活。
+
+*** 安装可选功能
 :PROPERTIES:
 :CREATED:  [2022-10-11 Tue 11:15]
 :ID:       97FC4447-B567-457F-A498-7CCA74DD5657
+:CUSTOM_ID: installing-optional-features
 :END:
-One feature -- following links of a PDF document by plain keystrokes -- requires ~imagemagick~'s convert utility. This requirement is optional, the installation process will detect if you have ~imagemagick~ installed or not.
-** Installing edoc-tools elisp code
+有一个功能需要 ~imagemagick~ 的 ~convert~ 程序：用普通按键跟随 PDF 文档里的链接。这项依赖是可选的，
+安装过程会检测 ~imagemagick~ 是否已安装。
+
+** 安装 edoc-tools 的 Lisp 代码
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 18:34]
 :ID:       32c4fc3b-b4ea-43bd-b92c-bdf2d3831fcf
+:CUSTOM_ID: installing-edoc-tools-elisp-code
 :END:
-~edoc-tools~ requires ~tablist~ package (>= version 0.70) to be installed, for it to work correctly. Please make sure that the latest version of ~tablist~ is installed.
+~edoc-tools~ 需要 ~tablist~ 包（1.0 或更高版本）才能正常工作，请确认装的是最新版 ~tablist~。包中声明的
+其余依赖为 ~let-alist~ 1.0.4、~dash~ 2.18.0、~s~ 1.11.0，并要求 Emacs 26.3 或更高版本。
 
-The Lisp code lives in ~lisp/~. Add it to ~load-path~ (or install the package directory with
-your package manager), then activate PDF Tools:
+Lisp 代码在 ~lisp/~ 目录。把它加入 ~load-path~（或用包管理器安装该目录），然后激活 ~edoc-tools~：
 #+begin_src elisp
   (add-to-list 'load-path "/path/to/edoc-tools/lisp")
-  (edoc-tools-install)  ; Standard activation command
-  (pdf-loader-install) ; On demand loading, leads to faster startup time
+  (edoc-tools-install)  ; 标准激活命令
+  (edoc-loader-install) ; 按需加载，启动更快
 #+end_src
 
-~make~ compiles only the Lisp files; the ~kc~ server binary is provided by ~PATH~ and is
-not built from this tree. Use your regular package manager (MELPA, NonGNU ELPA,
-~package-vc-install~, straight, elpaca, ...) to install the Lisp code.
+~make bytecompile~ 只编译 Lisp 文件；~kc~ 服务器二进制由 ~PATH~ 提供，不由本目录树构建。用惯用的
+包管理器安装 Lisp 代码（MELPA、NonGNU ELPA、~package-vc-install~、straight、elpaca 等）。
 
-You can test if the server is found and working by running
+可以用下面的命令检查服务器是否找到并可用：
 #+begin_src elisp
-  M-x pdf-info-check-kc RET
+  M-x edoc-info-check-kc RET
 #+end_src
 
-To complete the installation process, you need to activate the package by putting the code below somewhere in your ~.emacs~.  Alternatively, and if you care about startup time, you may want to use the loader version instead.
-#+begin_src elisp
-  (edoc-tools-install)  ; Standard activation command
-  (pdf-loader-install) ; On demand loading, leads to faster startup time
-#+end_src
+安装完成后，先看 [[id:19a3daea-6fa6-4ac3-9201-d2034c46ad8c][查看功能帮助]] 和
+[[id:8dccd685-18b8-4c98-977a-0fe2d66b724c][配置功能]] 两节。
 
-Once the Installation process is complete, check out [[id:19a3daea-6fa6-4ac3-9201-d2034c46ad8c][Easy Help for PDF Tools features]] and [[id:8dccd685-18b8-4c98-977a-0fe2d66b724c][Configuring PDF Tools features]] to get started!
-** Updating edoc-tools
+** 更新 edoc-tools
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 18:34]
 :ID:       9dd62314-f5ad-4bd4-83fa-8e28343e3d9c
+:CUSTOM_ID: updating-edoc-tools
 :END:
-Some day you might want to update this package via ~git pull~ and then reinstall it. Sometimes this may fail, especially if Lisp-Macros are involved and the version hasn't changed. To avoid this kind of problems, you should delete the old package via ~list-packages~, restart Emacs, run ~make distclean~ and then reinstall the package. Follow the steps described in [[id:32c4fc3b-b4ea-43bd-b92c-bdf2d3831fcf][Installing edoc-tools elisp code]].
+更新时可能需要 ~git pull~ 之后重新安装。若涉及 Lisp 宏且版本号没变，重装可能失败。为避免这类问题，
+先用 ~list-packages~ 删除旧包，重启 Emacs，执行 ~make distclean~，再按
+[[id:32c4fc3b-b4ea-43bd-b92c-bdf2d3831fcf][安装 edoc-tools 的 Lisp 代码]] 的步骤重装。
 
-This also applies when updating via MELPA / NonGNU ELPA (except for running the ~make distclean~ step).
+通过 MELPA / NonGNU ELPA 更新时同样适用（不必执行 ~make distclean~）。
 
-* Features
+* 功能
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 18:34]
 :ID:       555b4a2a-7881-49ac-a066-7e3f10034ca4
+:CUSTOM_ID: features
 :END:
-+ View :: View PDF documents in a buffer with DocView-like bindings. [[id:18d362e1-a1a3-4c51-9d45-04e2c53d8c0c][More information here]].
-+ Isearch :: Interactively search PDF documents like any other buffer, either for a string or a PCRE.
-+ Occur :: List lines matching a string or regexp in one or more PDF documents.
-+ Follow :: Click on highlighted links, moving to some part of a different page, some external file, a website or any other URI. Links may also be followed by keyboard commands.
-+ Annotations :: Display and list text and markup annotations (like underline), edit their contents and attributes (e.g. color), move them around, delete them or create new ones and then save the modifications back to the PDF file. [[id:5fff6471-a933-46d7-8ae9-b2fa4a9de952][More information here]].
-+ Attachments :: Save files attached to the PDF-file or list them in a dired buffer.
-+ Outline :: Use ~imenu~ or a special buffer (=M-x pdf-outline=) to examine and navigate the PDF's outline.
-+ SyncTeX :: Jump from a position on a page directly to the TeX source and vice versa.
-+ Virtual :: Use a collection of documents as if it were one, big single PDF.
-+ Misc ::
-  - Display PDF's metadata.
-  - Mark a region and kill the text from the PDF.
-  - Keep track of visited pages via a history.
-  - Apply a color filter for reading in low light conditions.
-** View and Navigate PDFs
++ 查看 :: 在缓冲区里查看 PDF 文档，键位与 DocView 类似。
+  [[id:18d362e1-a1a3-4c51-9d45-04e2c53d8c0c][详见这里]]。
++ 增量搜索 :: 像普通缓冲区一样交互式搜索 PDF 文档，支持字符串，也支持 PCRE。
++ Occur :: 在一个或多个 PDF 文档中列出匹配某字符串或正则的行。
++ 跟随链接 :: 点击高亮链接，跳到同一文档的其他位置、外部文件、网站或其他 URI。也可以用键盘命令跟随。
++ 批注 :: 显示并列出文本批注与标记类批注（如下划线），编辑其内容与属性（如颜色），移动、删除或新建，
+  并把改动写回 PDF 文件。[[id:5fff6471-a933-46d7-8ae9-b2fa4a9de952][详见这里]]。
++ 附件 :: 保存 PDF 中嵌入的文件，或用 dired 缓冲区列出它们。
++ 大纲 :: 用 ~imenu~ 或专用缓冲区（=M-x edoc-outline=）查看并浏览 PDF 的大纲。
++ SyncTeX :: 从页面上的位置直接跳到 TeX 源码，反向亦然。
++ 虚拟文档 :: 把一组文档当成一个大的 PDF 使用。
++ 其他 ::
+  - 显示 PDF 的元数据。
+  - 标记区域并把文本从 PDF 中 kill。
+  - 用历史记录跟踪访问过的页。
+  - 应用颜色滤镜，便于在暗光环境下阅读。
+
+** 查看与浏览 PDF
 :PROPERTIES:
 :CREATED:  [2021-12-30 Thu 18:25]
 :ID:       18d362e1-a1a3-4c51-9d45-04e2c53d8c0c
+:CUSTOM_ID: view-and-navigate-pdfs
 :END:
-PDFView Mode is an Emacs PDF viewer. It displays PDF files as PNG images in Emacs buffers. PDFs are navigable using DocView-like bindings. Once you have installed ~edoc-tools~, opening a PDF in Emacs will automatically trigger this mode.
-*** Keybindings for navigating PDF documents
+~edoc-view-mode~ 是 Emacs 里的 PDF 查看器。它把 PDF 以 PNG 图像的形式显示在缓冲区中，浏览键位与
+DocView 类似。装好 ~edoc-tools~ 后，在 Emacs 里打开 PDF 会自动进入这个模式。
+
+*** 浏览 PDF 文档的键位
 :PROPERTIES:
 :CREATED:  [2021-12-30 Thu 18:25]
 :ID:       01864499-2286-4e64-91f5-f8133f53ec61
+:CUSTOM_ID: keybindings-for-navigating-pdf-documents
 :END:
-| Navigation                                    |                         |
+| 导航                                    |                         |
 |-----------------------------------------------+-------------------------|
-| Scroll Up / Down by Page-full                 | ~space~ / ~backspace~   |
-| Scroll Up / Down by Line                      | ~C-n~ / ~C-p~           |
-| Scroll Right / Left                           | ~C-f~ / ~C-b~           |
-| First Page / Last Page                        | ~<~, ~M-<~ / ~>~, ~M->~ |
-| Next Page / Previous Page                     | ~n~ / ~p~               |
-| Incremental Search Forward / Backward         | ~C-s~ / ~C-r~           |
-| Occur (list all lines containing a phrase)    | ~M-s o~                 |
-| Jump to Occur Line                            | ~RETURN~                |
-| Pick a Link and Jump                          | ~F~                     |
-| Incremental Search in Links                   | ~f~                     |
-| History Back / Forwards                       | ~l~ / ~r~               |
-| Display Outline                               | ~o~                     |
-| Jump to Section from Outline                  | ~RETURN~                |
-| Jump to Page                                  | ~M-g g~                 |
-| Store position / Jump to position in register | ~m~ / ~'~               |
+| 按整页向上 / 向下滚动                   | ~space~ / ~backspace~   |
+| 按行向上 / 向下滚动                     | ~C-n~ / ~C-p~           |
+| 向右 / 向左滚动                         | ~C-f~ / ~C-b~           |
+| 首页 / 末页                             | ~<~, ~M-<~ / ~>~, ~M->~ |
+| 下一页 / 上一页                         | ~n~ / ~p~               |
+| 向前 / 向后增量搜索                     | ~C-s~ / ~C-r~           |
+| Occur（列出所有含某短语的行）           | ~M-s o~                 |
+| 跳到 Occur 中的行                       | ~RETURN~                |
+| 选择链接并跳转                          | ~F~                     |
+| 在链接中增量搜索                        | ~f~                     |
+| 历史后退 / 前进                         | ~l~ / ~r~               |
+| 显示大纲                                | ~o~                     |
+| 从大纲跳到章节                          | ~RETURN~                |
+| 跳到指定页                              | ~M-g g~                 |
+| 保存位置 / 跳到寄存器中的位置           | ~m~ / ~'~               |
 |-----------------------------------------------+-------------------------|
 |                                               |                         |
-Note that ~edoc-tools~ renders the PDF as images inside Emacs. This means that all the keybindings of ~image-mode~ work on individual PDF pages as well.
-| Image Mode             |                                             |
+注意 ~edoc-tools~ 把 PDF 渲染成 Emacs 内的图像，因此 ~image-mode~ 的键位对单个 PDF 页同样有效。
+| 图像模式               |                                             |
 |------------------------+---------------------------------------------|
 | image-scroll-right     | ~C-x >~ / ~<remap> <scroll-right>~          |
 | image-scroll-left      | ~C-x <~ / ~<remap> <scroll-left>~           |
@@ -245,136 +273,155 @@ Note that ~edoc-tools~ renders the PDF as images inside Emacs. This means that a
 |------------------------+---------------------------------------------|
 |                        |                                             |
 
-*** Keybindings for manipulating display of PDF
+*** 调整 PDF 显示的键位
 :PROPERTIES:
 :CREATED:  [2021-12-30 Thu 18:33]
 :ID:       73a18ea8-aa21-48d4-9d8b-dc64e3601000
+:CUSTOM_ID: keybindings-for-manipulating-display-of-pdf
 :END:
-| Display                                  |                 |
+| 显示                                     |                 |
 |------------------------------------------+-----------------|
-| Zoom in / Zoom out                       | ~+~ / ~-~       |
-| Fit Height / Fit Width / Fit Page        | ~H~ / ~W~ / ~P~ |
-| Trim Margins (set slice to bounding box) | ~s b~           |
-| Reset Margins                            | ~s r~           |
-| Reset Zoom                               | ~0~             |
-| Rotate Page                              | ~R~             |
+| 放大 / 缩小                              | ~+~ / ~-~       |
+| 适应高度 / 适应宽度 / 适应整页           | ~H~ / ~W~ / ~P~ |
+| 裁剪页边距（把 slice 设为边界框）        | ~s b~           |
+| 重置页边距                               | ~s r~           |
+| 重置缩放                                 | ~0~             |
+| 旋转页面                                 | ~R~             |
 |------------------------------------------+-----------------|
 
-** Annotations
+** 批注
 :PROPERTIES:
 :CREATED:  [2021-12-30 Thu 16:58]
 :ID:       5fff6471-a933-46d7-8ae9-b2fa4a9de952
+:CUSTOM_ID: annotations
 :END:
-~edoc-tools~ supports working with PDF Annotations. You can display and list text and markup annotations (like squiggly, highlight), edit their contents and attributes (e.g. color), move them around, delete them or create new ones and then save the modifications back to the PDF file.
-*** Keybindings for working with Annotations
+~edoc-tools~ 支持处理 PDF 批注。可以显示并列出文本批注与标记类批注（如波浪线、高亮），编辑其内容与
+属性（如颜色），移动、删除或新建，并把改动写回 PDF 文件。
+
+*** 批注相关键位
 :PROPERTIES:
 :CREATED:  [2021-12-30 Thu 17:08]
 :ID:       243b3843-b912-430b-884a-641304755b92
+:CUSTOM_ID: keybindings-for-working-with-annotations
 :END:
-| Annotations                          |                                                    |
+| 批注                                 |                                                    |
 |--------------------------------------+----------------------------------------------------|
-| List Annotations                     | ~C-c C-a l~                                        |
-| Jump to Annotations from List        | ~SPACE~                                            |
-| Mark Annotation for Deletion         | ~d~                                                |
-| Delete Marked Annotations            | ~x~                                                |
-| Unmark Annotations                   | ~u~                                                |
-| Close Annotation List                | ~q~                                                |
-| Enable/Disable Following Annotations | ~C-c C-f~                                          |
+| 列出批注                             | ~C-c C-a l~                                        |
+| 从列表跳到批注                       | ~SPACE~                                            |
+| 标记待删除的批注                     | ~d~                                                |
+| 删除已标记的批注                     | ~x~                                                |
+| 取消标记                             | ~u~                                                |
+| 关闭批注列表                         | ~q~                                                |
+| 启用/停用跟随批注                    | ~C-c C-f~                                          |
 |--------------------------------------+----------------------------------------------------|
-| Add and Edit Annotations             | Select region via Mouse selection.                 |
-|                                      | Then left-click context menu OR keybindings below  |
+| 新建与编辑批注                       | 用鼠标选中区域，然后用左键上下文菜单或下面的键位。 |
 |--------------------------------------+----------------------------------------------------|
-| Add a Markup Annotation              | ~C-c C-a m~                                        |
-| Add a Highlight Markup Annotation    | ~C-c C-a h~                                        |
-| Add a Strikeout Markup Annotation    | ~C-c C-a o~                                        |
-| Add a Squiggly Markup Annotation     | ~C-c C-a s~                                        |
-| Add an Underline Markup Annotation   | ~C-c C-a u~                                        |
-| Add a Text Annotation                | ~C-c C-a t~                                        |
+| 新建标记类批注                       | ~C-c C-a m~                                        |
+| 新建高亮批注                         | ~C-c C-a h~                                        |
+| 新建删除线批注                       | ~C-c C-a o~                                        |
+| 新建波浪线批注                       | ~C-c C-a s~                                        |
+| 新建下划线批注                       | ~C-c C-a u~                                        |
+| 新建文本批注                         | ~C-c C-a t~                                        |
 |--------------------------------------+----------------------------------------------------|
-| Highlight an arbitrary region        | Section region with Mouse Drag (Hold down Meta and |
-|                                      | drag). Then ~C-c C-a h~ to highlight that region.  |
+| 高亮任意区域                         | 按住 Meta 拖动鼠标选中区域，再用 ~C-c C-a h~       |
+|                                      | 高亮该区域。                                       |
 |--------------------------------------+----------------------------------------------------|
 |                                      |                                                    |
 
-** Working with AUCTeX
+** 与 AUCTeX 配合
 :PROPERTIES:
 :CREATED:  [2021-12-30 Thu 18:37]
 :ID:       698bdbad-e5f1-4958-b61e-9ed12d4b1234
+:CUSTOM_ID: working-with-auctex
 :END:
-*** Keybindings for working with AUCTeX
+*** 与 AUCTeX 配合的键位
 :PROPERTIES:
 :CREATED:  [2021-12-30 Thu 18:37]
 :ID:       ab7872c1-edd6-465d-9d1d-b621db6364a3
+:CUSTOM_ID: keybindings-for-working-with-auctex
 :END:
-| Syncing with AUCTeX                           |             |
+| 与 AUCTeX 同步                                |             |
 |-----------------------------------------------+-------------|
-| Refresh File (e.g., after recompiling source) | ~g~         |
-| Jump to PDF Location from Source              | ~C-c C-g~   |
-| Jump Source Location from PDF                 | ~C-mouse-1~ |
+| 刷新文件（例如重新编译源码之后）              | ~g~         |
+| 从源码跳到 PDF 位置                           | ~C-c C-g~   |
+| 从 PDF 跳到源码位置                           | ~C-mouse-1~ |
 
-** Miscellaneous features
+** 其他功能
 :PROPERTIES:
 :CREATED:  [2021-12-30 Thu 18:37]
 :ID:       bbefb49d-fca8-4d4f-9d16-4a4ad1946d89
+:CUSTOM_ID: miscellaneous-features
 :END:
-*** Keybindings for miscellaneous features in PDF tools
+*** edoc-tools 其他功能的键位
 :PROPERTIES:
 :CREATED:  [2021-12-30 Thu 18:35]
 :ID:       9148deff-dd5a-46be-a48f-cd2f96b7ce19
+:CUSTOM_ID: keybindings-for-miscellaneous-features-in-edoc-tools
 :END:
-| Miscellaneous                                 |           |
+| 其他功能                                      |           |
 |-----------------------------------------------+-----------|
-| Print File                                    | ~C-c C-p~ |
+| 打印文件                                      | ~C-c C-p~ |
 
-** Easy Help for PDF Tools features
+** 查看功能帮助
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 13:49]
 :ID:       19a3daea-6fa6-4ac3-9201-d2034c46ad8c
+:CUSTOM_ID: easy-help-for-edoc-tools-features
 :END:
 #+begin_src elisp
   M-x edoc-tools-help RET
 #+end_src
 
-Run =M-x edoc-tools-help= inside Emacs, as shown above. It will list all the features provided by ~edoc-tools~ as well as the key-bindings for these features.
+在 Emacs 里执行 =M-x edoc-tools-help=，它会列出 ~edoc-tools~ 提供的全部功能以及这些功能的键位。
 
-** Configuring PDF Tools features
+** 配置 edoc-tools 的功能
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 13:51]
 :ID:       8dccd685-18b8-4c98-977a-0fe2d66b724c
+:CUSTOM_ID: configuring-edoc-tools-features
 :END:
-Once you have read through the features provided by ~edoc-tools~, you probably want to customize the behavior of the features as per your requirements. Full customization of features is available by running the following:
+看完 ~edoc-tools~ 提供的功能之后，你可能想按需调整其行为。执行下面的命令可以完整配置各项功能：
 #+begin_src elisp
   M-x edoc-tools-customize RET
 #+end_src
 
-* Known problems
+* 已知问题
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 18:29]
 :ID:       4baf936a-2454-41c9-99db-177133ee9568
+:CUSTOM_ID: known-problems
 :END:
 
 ** linum-mode
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 18:34]
 :ID:       73625d02-d472-4e7d-9805-db6d3b60e0ff
+:CUSTOM_ID: linum-mode
 :END:
-~edoc-tools~ does not work well together with ~linum-mode~ and activating it in a ~pdf-view-mode~, e.g. via ~global-linum-mode~, might make Emacs choke.
+~edoc-tools~ 与 ~linum-mode~ 一起用效果不好，在 ~edoc-view-mode~ 里启用它（例如通过
+~global-linum-mode~）可能让 Emacs 卡住。
 
 ** display-line-numbers-mode
 :PROPERTIES:
 :CREATED:  [2022-01-03 Mon 08:31]
 :ID:       f178ba41-0f5a-4d22-b4a8-889af1af566e
+:CUSTOM_ID: display-line-numbers-mode
 :END:
-This mode is an alternative to ~linum-mode~ and is available since Emacs 26. ~edoc-tools~ does not work well with it. For example, it makes horizontal navigation (such as ~C-f~, ~C-b~, ~C-x <~ or ~C-x >~ ) in a document impossible.
+这个模式是 ~linum-mode~ 的替代品，Emacs 26 起可用。~edoc-tools~ 与它一起用效果不好，例如会让文档
+里的横向浏览（~C-f~、~C-b~、~C-x <~、~C-x >~）无法进行。
 
 ** auto-revert
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 18:34]
 :ID:       24b671c6-c242-4983-9d11-38421d2752e9
+:CUSTOM_ID: auto-revert
 :END:
-Autorevert works by polling the file-system every ~auto-revert-interval~ seconds, optionally combined with some event-based reverting via [[https://www.gnu.org/software/emacs/manual/html_node/elisp/File-Notifications.html][file notification]]. But this currently does not work reliably, such that Emacs may revert the PDF-buffer while the corresponding file is still being written to (e.g. by LaTeX), leading to a potential error.
+自动回退的做法是每隔 ~auto-revert-interval~ 秒轮询文件系统，也可以配合
+[[https://www.gnu.org/software/emacs/manual/html_node/elisp/File-Notifications.html][文件通知]]
+使用基于事件的方式。但这目前并不可靠，Emacs 可能在对应文件还在写入时（例如 LaTeX 正在编译）
+就回退 PDF 缓冲区，导致报错。
 
-With a recent [[https://www.gnu.org/software/auctex/][AUCTeX]] installation, you might want to put the following somewhere in your dotemacs, which will revert the PDF-buffer *after* the TeX compilation has finished.
+使用较新的 [[https://www.gnu.org/software/auctex/][AUCTeX]] 时，可以在配置里加上下面这行，让 TeX 编译完成之后再回退 PDF 缓冲区。
 #+BEGIN_SRC emacs-lisp
   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
 #+END_SRC
@@ -383,24 +430,28 @@ With a recent [[https://www.gnu.org/software/auctex/][AUCTeX]] installation, you
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 18:34]
 :ID:       4766d18a-c02a-456d-8398-701bbea3ee80
+:CUSTOM_ID: sublimity
 :END:
-L/R scrolling breaks while zoomed into a pdf, with usage of sublimity smooth scrolling features
+配合 sublimity 的平滑滚动使用时，放大后的 PDF 左右滚动会失效。
 
-** Text selection is not transparent in PDFs OCRed with Tesseract
+** Tesseract OCR 过的 PDF 里文本选区不透明
 :PROPERTIES:
 :CREATED:  [2022-09-19 Mon 18:50]
 :ID:       C3A4A7C0-6BBB-4923-AD39-3707C8482A76
+:CUSTOM_ID: text-selection-is-not-transparent-in-pdfs-ocred-with-tesseract
 :END:
 
-In such PDFs the selected text becomes hidden behind the selection; see [[https://github.com/vedang/pdf-tools/issues/149][this issue]], which also describes the workaround in detail. The following function, which depends on the [[https://github.com/orgtre/qpdf.el][qpdf.el]] package, can be used to convert such a PDF file into one where text selection is transparent:
+这类 PDF 中选中的文字会被选区遮住，参见上游 pdf-tools 仓库的
+[[https://github.com/vedang/pdf-tools/issues/149][这个 issue]]，里面有详细的绕过办法。下面的函数依赖
+[[https://github.com/orgtre/qpdf.el][qpdf.el]] 包，可以把这类 PDF 转成文本选区透明的文件：
 #+begin_src elisp
   (defun my-fix-pdf-selection ()
     "Replace pdf with one where selection shows transparently."
     (interactive)
     (unless (equal (file-name-extension (buffer-file-name)) "pdf")
       (error "Buffer should visit a pdf file."))
-    (unless (equal major-mode 'pdf-view-mode)
-      (pdf-view-mode))
+    (unless (equal major-mode 'edoc-view-mode)
+      (edoc-view-mode))
     ;; save file in QDF-mode
     (qpdf-run (list
                (concat "--infile="
@@ -413,121 +464,154 @@ In such PDFs the selected text becomes hidden behind the selection; see [[https:
     (while (re-search-forward "3 Tr" nil t)
       (replace-match "7 Tr" nil nil))
     (save-buffer)
-    (pdf-view-mode))
+    (edoc-view-mode))
 #+end_src
-Note that this overwrites the PDF file visited in the buffer from which it is run! To avoid this replace the ~--replace-input~ with ~(concat "--outfile=" (file-truename (read-file-name "Outfile: ")))~.
+注意这个函数会覆盖运行它的缓冲区所访问的 PDF 文件。要避免覆盖，把 ~--replace-input~ 换成
+~(concat "--outfile=" (file-truename (read-file-name "Outfile: ")))~。
 
-* Key-bindings in PDF Tools
+* 键位总表
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 18:34]
 :ID:       fa99285a-437e-4be4-9a65-426db019019f
+:CUSTOM_ID: key-bindings-in-edoc-tools
 :END:
-- [[brain-child:01864499-2286-4e64-91f5-f8133f53ec61][Keybindings for navigating PDF documents]]
-- [[brain-child:243b3843-b912-430b-884a-641304755b92][Keybindings for working with Annotations]]
-- [[brain-child:73a18ea8-aa21-48d4-9d8b-dc64e3601000][Keybindings for manipulating display of PDF]]
-- [[brain-child:ab7872c1-edd6-465d-9d1d-b621db6364a3][Keybindings for working with AUCTeX]]
-- [[brain-child:9148deff-dd5a-46be-a48f-cd2f96b7ce19][Keybindings for miscellaneous features in PDF tools]]
+- [[brain-child:01864499-2286-4e64-91f5-f8133f53ec61][浏览 PDF 文档的键位]]
+- [[brain-child:243b3843-b912-430b-884a-641304755b92][批注相关键位]]
+- [[brain-child:73a18ea8-aa21-48d4-9d8b-dc64e3601000][调整 PDF 显示的键位]]
+- [[brain-child:ab7872c1-edd6-465d-9d1d-b621db6364a3][与 AUCTeX 配合的键位]]
+- [[brain-child:9148deff-dd5a-46be-a48f-cd2f96b7ce19][edoc-tools 其他功能的键位]]
 
-* Tips and Tricks for Developers
+* 开发者提示
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 18:34]
 :ID:       fd64c10c-4ea5-4ece-8d95-b723098dd4f6
+:CUSTOM_ID: tips-and-tricks-for-developers
 :END:
-** Turn on debug mode
+** 打开调试模式
 :PROPERTIES:
 :CREATED:  [2021-12-29 Wed 18:34]
 :ID:       100fc888-7064-4dd3-9db4-c84a7e8f4af0
+:CUSTOM_ID: turn-on-debug-mode
 :END:
 #+begin_src elisp
   M-x edoc-tools-toggle-debug RET
 #+end_src
-Toggling debug mode prints information about various operations in the ~*Messages*~ buffer, and this is useful to see what is happening behind the scenes
+打开调试模式后，各种操作的信息会打印到 ~*Messages*~ 缓冲区，便于观察内部行为。
 
-** Run server tests locally
+** 本地运行测试
 :PROPERTIES:
 :CREATED:  [2022-05-09 Mon 21:27]
 :ID:       1CBE7325-A5A1-479B-9A98-BEEFBAC9D8FF
+:CUSTOM_ID: run-server-tests-locally
 :END:
-You can go to the ~edoc-tools~ folder and run
+服务器 ~kc~ 的单元测试在 knowcraft 仓库的根目录下运行，命令是
 #+begin_src sh
-  $ cargo test --release --manifest-path server/Cargo.toml
+  $ cargo test --release
 #+end_src
-to run the server unit tests. ~make~ builds the release binary; it does not run the ERT suite.
+本仓库不再包含服务器源码，没有服务器测试可跑。~make~ 的默认目标不执行编译，
+要显式执行 ~make bytecompile~ 才编译 Lisp 文件；ERT 测试组在 ~test/~ 目录，不在 ~make~ 的目标里。
 
-** Issue Template for Bug Reports
+** 缺陷报告模板
 :PROPERTIES:
 :CREATED:  [2022-12-02 Fri 13:30]
 :ID:       F563A2A4-FCF8-4F04-94CA-19E80E4841A6
+:CUSTOM_ID: issue-template-for-bug-reports
 :END:
-Please use the 'Bug Report' issue template when reporting bugs. The template is as follows:
+报告缺陷时请使用 "Bug Report" issue 模板，模板内容如下：
 
-*** Describe the bug
-A clear and concise description of what the bug is.
+*** 描述缺陷
+:PROPERTIES:
+:CUSTOM_ID: describe-the-bug
+:END:
+清楚简洁地描述缺陷是什么。
 
-*** Steps To Reproduce the behaviour:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+*** 复现步骤
+:PROPERTIES:
+:CUSTOM_ID: steps-to-reproduce-the-behaviour
+:END:
+1. 打开 '...'
+2. 点击 '....'
+3. 滚动到 '....'
+4. 看到报错
 
-*** What is the expected behaviour?
-A clear and concise description of what you expected to happen.
+*** 期望行为
+:PROPERTIES:
+:CUSTOM_ID: what-is-the-expected-behaviour
+:END:
+清楚简洁地描述你期望发生什么。
 
-*** Desktop
-Please complete the following information:
+*** 桌面环境
+:PROPERTIES:
+:CUSTOM_ID: desktop
+:END:
+请补齐下面的信息：
 
-- OS: [eg: MacOS Catalina]
-- Emacs Version: [This should be the output of =M-x emacs-version= ]
-- `kc` path: [output of ~M-: pdf-info-kc-program~]
+- 操作系统：[例如 MacOS Catalina]
+- Emacs 版本：[=M-x emacs-version= 的输出]
+- `kc` 路径：[~M-: edoc-info-kc-program~ 的输出]
 
-*** Your edoc-tools install
-Please complete the following information:
-- ~edoc-tools~ Version: [ =M-x package-list-packages= -> Search for ~edoc-tools~ -> Hit Enter and copy all the details that pop up in the Help buffer]
-- ~edoc-tools~ customization / configuration that you use:
+*** 你的 edoc-tools 安装信息
+:PROPERTIES:
+:CUSTOM_ID: your-edoc-tools-install
+:END:
+请补齐下面的信息：
+- ~edoc-tools~ 版本：[=M-x package-list-packages= -> 搜索 ~edoc-tools~ -> 回车，复制 Help 缓冲区
+  里弹出的全部信息]
+- 你用到的 ~edoc-tools~ 定制与配置：
 
-*** Additional context
-- If you are reporting a crash, please try and add the Backtrace / Stacktrace of the crash.
-- If you are reporting a bug, please try and attach an example PDF file where I can reproduce the bug.
-- If you can attach screenshots or recordings, that is a great help
-- Please try reproducing the bug yourself on Vanilla Emacs before reporting the problem.
+*** 其他信息
+:PROPERTIES:
+:CUSTOM_ID: additional-context
+:END:
+- 如果报告崩溃，请附上崩溃的 Backtrace / Stacktrace。
+- 如果报告缺陷，请附上能复现问题的示例 PDF 文件。
+- 如果能附上截图或录屏，会很有帮助。
+- 报告问题之前，请先在 Vanilla Emacs 上复现一遍。
 
-* FAQs
+* 常见问题
 :PROPERTIES:
 :CREATED:  [2021-12-30 Thu 22:04]
 :ID:       3be6abe7-163e-4c3e-a7df-28e8470fe37f
+:CUSTOM_ID: faqs
 :END:
-** kc has stopped working!
+** kc 停止工作了
 :PROPERTIES:
 :CREATED:  [2023-06-10 Sat 23:25]
 :ID:       9B5F797F-9BB3-45D9-B364-D4E5F13222BF
+:CUSTOM_ID: kc-has-stopped-working
 :END:
-The server binary may be missing or stale. Make sure ~kc~ is on ~PATH~ or
-~pdf-info-kc-program~ points at it, then restart it with ~M-x pdf-info-restart-process~ or
-reopen the document.
+服务器二进制可能缺失或过期。确认 ~kc~ 在 ~PATH~ 上，或 ~edoc-info-kc-program~ 指向它。确认之后
+重新打开文档即可。
 
-** PDFs are not rendering well!
+服务器意外退出时，~edoc-info-restart-process-p~ 决定怎么处理：~nil~ 不作处理，~t~ 自动重启，
+~ask~ 询问是否重启。
+
+** PDF 渲染效果不好
 :PROPERTIES:
 :CREATED:  [2021-12-30 Thu 22:04]
 :ID:       20ef86be-7c92-4cda-97ec-70a22484e689
+:CUSTOM_ID: pdfs-are-not-rendering-well
 :END:
-~edoc-tools~ version ~1.1.0~ release changed the default value of ~pdf-view-use-scaling~ to ~t~ (previously, it was ~nil~). This has been done keeping in mind that most modern monitors are HiDPI screens, so the default configuration should cater to this user. If you are not using a HiDPI screen, you might have to change this value to ~nil~ in your configuration
-
+~edoc-tools~ 1.1.0 版把 ~edoc-view-use-scaling~ 的默认值从 ~nil~ 改成了 ~t~。这样改是考虑到
+多数现代显示器是 HiDPI 屏，默认配置应适配这类用户。如果你用的不是 HiDPI 屏，可能需要把它设回
+~nil~，渲染时图像才会正确缩放。
 #+begin_src elisp
-  (setq pdf-view-use-scaling nil)
+  (setq edoc-view-use-scaling nil)
 #+end_src
 
-to scale the images correctly when rendering them.
-
-** What Emacs versions does edoc-tools support?
+** edoc-tools 支持哪些 Emacs 版本
 :PROPERTIES:
 :CREATED:  [2022-01-02 Sun 10:12]
 :ID:       f44c66e6-402d-4154-b806-6bb4180a0a5b
+:CUSTOM_ID: what-emacs-versions-does-edoc-tools-support
 :END:
-~edoc-tools~ supports the 3 latest versions of Emacs major releases. At the moment of this writing, this means that the minimum supported Emacs version is ~26.3~.
+~edoc-tools~ 支持最近三个 Emacs 大版本。写作时的最低支持版本是 ~26.3~。
 
-** I am a developer, making changes to the edoc-tools source code
+** 我要改 edoc-tools 的源码
 :PROPERTIES:
 :CREATED:  [2022-05-09 Mon 21:31]
 :ID:       2D173424-C211-4474-B0D0-83F4381CAFFA
+:CUSTOM_ID: i-am-a-developer-making-changes-to-the-edoc-tools-source-code
 :END:
-Thank you for taking the time to contribute back to the code. You may find some useful notes in the [[id:fd64c10c-4ea5-4ece-8d95-b723098dd4f6][Tips and Tricks for Developers]] section. Please be sure to check it out!
+感谢你愿意把改动贡献回代码库。[[id:fd64c10c-4ea5-4ece-8d95-b723098dd4f6][开发者提示]] 一节里有一些
+可用的信息，请先看那一节。

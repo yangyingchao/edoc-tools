@@ -25,13 +25,13 @@ Please complete the following information:
 
 - OS: [eg: MacOS Catalina]
 - Emacs Version: [This should be the output of `M-x emacs-version`]
-- `epdfinfo` path: [output of `M-: pdf-info-epdfinfo-program`]
+- `kc` path: [output of `M-: edoc-info-kc-program`]
 
-**Your pdf-tools install**
+**Your edoc-tools install**
 Please complete the following information:
 
-- `pdf-tools` Version: [`M-x package-list-packages` -> Search for `pdf-tools` -> Hit Enter and copy all the details that pop up in the Help buffer]
-- `pdf-tools` customization / configuration that you use
+- `edoc-tools` Version: [`M-x package-list-packages` -> Search for `edoc-tools` -> Hit Enter and copy all the details that pop up in the Help buffer]
+- `edoc-tools` customization / configuration that you use
 
 **Additional context**
 - If you are reporting a crash, please try and add the Backtrace / Stacktrace of the crash.
