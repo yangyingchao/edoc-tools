@@ -48,6 +48,7 @@
 
 ;;; Code:
 
+(require 'json)
 (require 'tq)
 (require 'cl-lib)
 
@@ -111,6 +112,14 @@ in a `with-temp-buffer' form."
 
 
 
+(defcustom edoc-info-required-formats '("pdf")
+  "Backends the kc server must provide.
+
+Names are the BACKEND column of \=`kc doc-server list\=', e.g.
+\"pdf\", \"word\", \"slides\".  The check is skipped when kc does
+not know that subcommand, and disabled entirely when this is nil."
+  :type '(repeat string))
+
 ;; * ================================================================== *
 ;; * Variables
 ;; * ================================================================== *
@@ -225,7 +234,7 @@ Returns nil."
                               (edoc-info-query--escape pdffile))))
             (unless (= 0 (apply #'call-process
                                 executable cmdfile (current-buffer)
-                                nil "doc-server"
+                                nil "doc-server" "run"
                                 (when edoc-info-kc-error-filename
                                   (list edoc-info-kc-error-filename))))
               (error "Error running `%s': %s"
@@ -237,9 +246,79 @@ Returns nil."
           (delete-file pdffile))
         (when (file-exists-p tempdir)
           (delete-directory tempdir t)))))
+  (edoc-info--check-required-formats)
   (when interactive-p
     (message "The kc program appears to be working."))
   nil)
+
+(defun edoc-info--run-list ()
+  "Run \=`kc doc-server list --json\' and return the parsed entries.
+
+The result is a list of alists with the keys \=`backend\' and
+\=`extension\'.  Nil means the capabilities are unknown: kc may be
+too old to have the subcommand, or its output did not parse."
+  (when (and (stringp edoc-info-kc-program)
+             (file-executable-p edoc-info-kc-program))
+    (let ((default-directory (expand-file-name "~/"))
+          (buffer (get-buffer-create " *edoc-info-list*")))
+      (unwind-protect
+          (progn
+            (with-current-buffer buffer
+              (erase-buffer))
+            (when (zerop (ignore-errors
+                           (call-process edoc-info-kc-program nil buffer nil
+                                         "doc-server" "list" "--json")))
+              (ignore-errors
+                (with-current-buffer buffer
+                  (goto-char (point-min))
+                  (append (json-read) nil)))))
+        (kill-buffer buffer)))))
+
+(defun edoc-info--check-required-formats ()
+  "Warn about required backends the kc server does not provide.
+
+Do nothing when kc cannot report its capabilities."
+  (when edoc-info-required-formats
+    (let ((entries (edoc-info--run-list)))
+      (when entries
+        (let* ((present (delete-dups
+                         (delq nil
+                               (mapcar (lambda (entry)
+                                         (cdr (assq 'backend entry)))
+                                       entries))))
+               (missing (seq-remove (lambda (backend)
+                                      (member backend present))
+                                    edoc-info-required-formats)))
+          (when missing
+            (display-warning
+             'edoc-info
+             (format "kc does not provide the required backend(s): %s (it has: %s)"
+                     (mapconcat #'identity missing ", ")
+                     (if present (mapconcat #'identity present ", ") "none"))
+             :warning)))))))
+
+(defun edoc-info-list-supported-formats ()
+  "Show the document types the kc server supports.
+
+The list comes from \=`kc doc-server list --json\'; the file types kc
+can render are reported by the server itself, so this is also a way
+to check whether a backend is missing."
+  (interactive)
+  (let* ((entries (edoc-info--run-list))
+         (buffer (get-buffer-create "*edoc-info-supported-formats*")))
+    (with-current-buffer buffer
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (if (null entries)
+            (insert "kc does not report its supported document types.\n")
+          (dolist (entry entries)
+            (insert (format "%-8s %s\n"
+                            (or (cdr (assq 'backend entry)) "?")
+                            (or (cdr (assq 'extension entry)) "?"))))
+          (insert "\n"))
+        (goto-char (point-min))
+        (special-mode)))
+    (display-buffer buffer)))
 
 (defun edoc-info-process-assert-running (&optional force)
   "Assert a running process.
@@ -276,7 +355,7 @@ error."
            (default-directory "~")
            (proc (apply #'start-process
                         "kc" " *kc*" edoc-info-kc-program
-                        "doc-server"
+                        "doc-server" "run"
                         (when edoc-info-kc-error-filename
                           (list edoc-info-kc-error-filename)))))
       (with-current-buffer " *kc*"
